@@ -11,7 +11,4 @@ export class Player extends Model {
 
   @Column
   player2: string;
-
-  @Column({ defaultValue: true })
-  isActive: boolean;
 }

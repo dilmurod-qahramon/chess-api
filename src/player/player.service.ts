@@ -7,14 +7,19 @@ import { Player } from "src/models/player.model";
 export class PlayerService {
   constructor(
     @InjectModel(Player)
-    private playerModel: typeof Player,
+    private readonly playerModel: typeof Player,
   ) {}
 
-  create(createPlayerDto: CreatePlayerDto) {
-    return "This action adds a new player";
+  async create(createPlayerDto: CreatePlayerDto) {
+    const player = new Player();
+    player.player1 = createPlayerDto.player1;
+    player.player2 = createPlayerDto.player2;
+    await player.save();
+    return player.id;
   }
 
   async findAll(): Promise<Player[]> {
+    // return this.userModel.findByPk(id);
     return this.playerModel.findAll();
   }
 
