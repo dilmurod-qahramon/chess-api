@@ -18,8 +18,12 @@ import { Move } from "./models/move.model";
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
+<<<<<<< HEAD
       models: [GameSession, Move, Player],
       autoLoadModels: true,
+=======
+      models: [Player, Move, GameSession],
+>>>>>>> def20f5fea83b3ca3d199ac37e74324c6a5346ff
       synchronize: true,
     }),
     SessionModule,

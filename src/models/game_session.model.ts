@@ -20,8 +20,13 @@ export class GameSession extends Model<GameSession> {
   })
   id: UUID;
 
+<<<<<<< HEAD
   @Default("pending")
   @Column(DataType.STRING)
+=======
+  @Column(DataType.STRING)
+  @Default("pending")
+>>>>>>> def20f5fea83b3ca3d199ac37e74324c6a5346ff
   current_status: "pending" | "ongoing" | "completed";
 
   @Column
