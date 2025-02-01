@@ -1,20 +1,18 @@
-import { UUID } from "node:crypto";
+import { UUID } from "crypto";
 import {
   Column,
-  Table,
-  Model,
-  AutoIncrement,
-  DataType,
   CreatedAt,
-  NotNull,
+  DataType,
   Default,
-  Unique,
   HasMany,
+  Model,
+  Table,
+  UpdatedAt,
 } from "sequelize-typescript";
 import { Move } from "./move.model";
 
-@Table({ tableName: "players" })
-export class Player extends Model<Player> {
+@Table({ tableName: "game_sessions" })
+export class GameSession extends Model<GameSession> {
   @Column({
     primaryKey: true,
     type: DataType.UUID,
@@ -23,17 +21,16 @@ export class Player extends Model<Player> {
   id: UUID;
 
   @Column(DataType.STRING)
-  @Unique
-  @NotNull
-  username: string;
+  @Default("pending")
+  current_status: "pending" | "ongoing" | "completed";
 
-  @Column(DataType.CHAR)
-  @Default("w")
-  piece_color: "w" | "b";
+  @Column
+  @UpdatedAt
+  last_move: Date;
 
   @Column
   @CreatedAt
-  created_at: Date;
+  started_at: Date;
 
   @HasMany(() => Move)
   moves: Move[];

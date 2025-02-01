@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { CreatePlayerDto } from "./dto/create-player.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { Player } from "src/models/player.model";
 
@@ -19,11 +18,11 @@ export class PlayerService {
   }
 
   async findAll(): Promise<Player[]> {
-    // return this.userModel.findByPk(id);
     return this.playerModel.findAll();
   }
 
   findOne(id: number): Promise<Player | null> {
+    // return this.userModel.findByPk(id);
     return this.playerModel.findOne({
       where: {
         id,
