@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 // import { Controller, Get, Post, Body, Param, Delete } from "@nestjs/common";
 // import { PlayerService } from "./player.service";
-=======
-import { Controller, Get, Post, Body, Param, Delete } from "@nestjs/common";
-import { PlayerService } from "./player.service";
->>>>>>> def20f5fea83b3ca3d199ac37e74324c6a5346ff
 
 // @Controller("players")
 // export class PlayerController {

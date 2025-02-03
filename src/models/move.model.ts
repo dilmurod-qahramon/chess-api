@@ -8,7 +8,6 @@ import {
   BelongsTo,
   Model,
 } from "sequelize-typescript";
-import { Player } from "./player.model";
 import { GameSession } from "./game_session.model";
 
 @Table({ tableName: "moves" })
@@ -33,11 +32,4 @@ export class Move extends Model<Move> {
 
   @BelongsTo(() => GameSession)
   gameSession: GameSession;
-
-  @ForeignKey(() => Player)
-  @Column(DataType.UUID)
-  playerId: UUID;
-
-  @BelongsTo(() => Player)
-  player: Player;
 }

@@ -13,13 +13,7 @@ export class SessionService {
   ) {}
 
   async create(createSessionDto: CreateSessionDto) {
-<<<<<<< HEAD
     return "This action adds a new session";
-=======
-    return await this.gameSessionModel.create<GameSession>({
-      ...createSessionDto,
-    });
->>>>>>> def20f5fea83b3ca3d199ac37e74324c6a5346ff
   }
 
   async findAll() {
