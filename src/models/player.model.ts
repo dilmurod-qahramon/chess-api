@@ -22,9 +22,11 @@ export class Player extends Model<Player> {
   })
   id: UUID;
 
-  @Unique
   @Column(DataType.STRING)
   username: string;
+
+  @Column(DataType.STRING)
+  opponent_username: string;
 
   @Default("w")
   @Column(DataType.CHAR)

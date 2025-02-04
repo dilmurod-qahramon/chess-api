@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { SessionService } from "./session.service";
-import { SessionController } from "./session.controller";
+import { SessionService } from "./services/session.service";
+import { SessionController } from "./controllers/session.controller";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { GameSession } from "src/models/game_session.model";
 

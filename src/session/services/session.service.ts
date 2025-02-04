@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { CreateSessionDto } from "./dto/create-session.dto";
-import { UpdateSessionDto } from "./dto/update-session.dto";
+import { CreateSessionDto } from "../dto/create-session.dto";
+import { UpdateSessionDto } from "../dto/update-session.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { GameSession } from "src/models/game_session.model";
 import { UUID } from "crypto";
