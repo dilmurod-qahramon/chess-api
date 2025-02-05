@@ -10,11 +10,16 @@ import {
   Default,
   Unique,
   HasMany,
+  UpdatedAt,
 } from "sequelize-typescript";
 import { GameSession } from "./game_session.model";
+import {
+  InferAttributes,
+  InferCreationAttributes,
+} from "sequelize/types/model";
 
-@Table({ tableName: "players" })
-export class Player extends Model<Player> {
+@Table({ tableName: "players", timestamps: true })
+export class Player extends Model {
   @Column({
     primaryKey: true,
     type: DataType.UUID,
@@ -35,6 +40,10 @@ export class Player extends Model<Player> {
   @Column
   @CreatedAt
   created_at: Date;
+
+  @Column
+  @UpdatedAt
+  updated_at: Date;
 
   @HasMany(() => GameSession)
   game_sessions: GameSession[];

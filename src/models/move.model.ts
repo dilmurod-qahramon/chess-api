@@ -7,11 +7,12 @@ import {
   Table,
   BelongsTo,
   Model,
+  UpdatedAt,
 } from "sequelize-typescript";
 import { GameSession } from "./game_session.model";
 
-@Table({ tableName: "moves" })
-export class Move extends Model<Move> {
+@Table({ tableName: "moves", timestamps: true })
+export class Move extends Model {
   @Column({
     primaryKey: true,
     type: DataType.UUID,
@@ -26,9 +27,13 @@ export class Move extends Model<Move> {
   @CreatedAt
   created_at: Date;
 
+  @Column
+  @UpdatedAt
+  updated_at: Date;
+
   @ForeignKey(() => GameSession)
   @Column(DataType.UUID)
-  gameSessionId: UUID;
+  game_session_id: UUID;
 
   @BelongsTo(() => GameSession)
   gameSession: GameSession;

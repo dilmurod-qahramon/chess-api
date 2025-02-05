@@ -7,6 +7,7 @@ import { Player } from "./models/player.model";
 import { SessionModule } from "./session/session.module";
 import { GameSession } from "./models/game_session.model";
 import { Move } from "./models/move.model";
+import { PlayerModule } from './player/player.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { Move } from "./models/move.model";
       synchronize: true,
     }),
     SessionModule,
+    PlayerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

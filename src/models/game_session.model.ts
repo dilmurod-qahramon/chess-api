@@ -14,8 +14,8 @@ import {
 import { Move } from "./move.model";
 import { Player } from "./player.model";
 
-@Table({ tableName: "game_sessions" })
-export class GameSession extends Model<GameSession> {
+@Table({ tableName: "game_sessions", timestamps: true })
+export class GameSession extends Model {
   @Column({
     primaryKey: true,
     type: DataType.UUID,
@@ -40,7 +40,7 @@ export class GameSession extends Model<GameSession> {
 
   @ForeignKey(() => Player)
   @Column(DataType.UUID)
-  playerId: UUID;
+  player_id: UUID;
 
   @BelongsTo(() => Player)
   player: Player;
