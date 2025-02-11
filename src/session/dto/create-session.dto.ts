@@ -1,5 +1,7 @@
-import { Move } from "src/models/move.model";
+import { UUID } from "node:crypto";
 
 export class CreateSessionDto {
-  moves?: Move[];
+  leftPlayerId: UUID;
+  rightPlayerId: UUID;
+  turnDuration: number;
 }

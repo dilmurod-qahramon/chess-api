@@ -1,50 +1,34 @@
 import { UUID } from "node:crypto";
 import {
+  AllowNull,
   Column,
-  Table,
-  Model,
-  AutoIncrement,
-  DataType,
   CreatedAt,
-  NotNull,
+  DataType,
   Default,
-  Unique,
   HasMany,
-  UpdatedAt,
+  IsUUID,
+  Model,
+  PrimaryKey,
+  Table,
 } from "sequelize-typescript";
-import { GameSession } from "./game_session.model";
-import {
-  InferAttributes,
-  InferCreationAttributes,
-} from "sequelize/types/model";
+import { GameSession } from "./game-session.model";
 
-@Table({ tableName: "players", timestamps: true })
+@Table({ tableName: "players", timestamps: true, updatedAt: false })
 export class Player extends Model {
-  @Column({
-    primaryKey: true,
-    type: DataType.UUID,
-    defaultValue: DataType.UUIDV4,
-  })
+  @IsUUID(4)
+  @PrimaryKey
+  @Default(DataType.UUIDV4)
+  @Column
   id: UUID;
 
-  @Column(DataType.STRING)
+  @AllowNull(false)
+  @Column({ field: "username", type: DataType.STRING })
   username: string;
 
-  @Column(DataType.STRING)
-  opponent_username: string;
-
-  @Default("w")
-  @Column(DataType.CHAR)
-  piece_color: "w" | "b";
-
-  @Column
   @CreatedAt
-  created_at: Date;
-
-  @Column
-  @UpdatedAt
-  updated_at: Date;
+  @Column({ field: "created_at", type: DataType.DATE })
+  createdAt: Date;
 
   @HasMany(() => GameSession)
-  game_sessions: GameSession[];
+  gameSessions: GameSession[];
 }

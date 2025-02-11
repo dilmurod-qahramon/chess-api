@@ -1,17 +1,17 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { SessionService } from "./services/session.service";
-import { SessionController } from "./session.controller";
+import { SessionsController } from "./sessions.controller";
 
 describe("SessionController", () => {
-  let controller: SessionController;
+  let controller: SessionsController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [SessionController],
+      controllers: [SessionsController],
       providers: [SessionService],
     }).compile();
 
-    controller = module.get<SessionController>(SessionController);
+    controller = module.get<SessionsController>(SessionsController);
   });
 
   it("should be defined", () => {

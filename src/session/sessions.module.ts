@@ -1,12 +1,12 @@
 import { Module } from "@nestjs/common";
 import { SessionService } from "./services/session.service";
-import { SessionController } from "./session.controller";
+import { SessionsController } from "./sessions.controller";
 import { SequelizeModule } from "@nestjs/sequelize";
-import { GameSession } from "src/models/game_session.model";
+import { GameSession } from "src/models/game-session.model";
 
 @Module({
   imports: [SequelizeModule.forFeature([GameSession])],
-  controllers: [SessionController],
+  controllers: [SessionsController],
   providers: [SessionService],
 })
-export class SessionModule {}
+export class SessionsModule {}

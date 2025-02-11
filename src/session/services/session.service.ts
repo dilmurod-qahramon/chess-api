@@ -1,8 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { CreateSessionDto } from "../dto/create-session.dto";
-import { UpdateSessionDto } from "../dto/update-session.dto";
 import { InjectModel } from "@nestjs/sequelize";
-import { GameSession } from "src/models/game_session.model";
+import {
+  GameActorTypes,
+  GameFieldState,
+  GameSession,
+} from "src/models/game-session.model";
 import { UUID } from "crypto";
 
 @Injectable()
@@ -13,24 +16,55 @@ export class SessionService {
   ) {}
 
   async create(createSessionDto: CreateSessionDto) {
-    return "This action adds a new session";
-  }
+    const gameSession = new this.gameSessionModel();
+    gameSession.leftPlayerId = createSessionDto.leftPlayerId;
+    gameSession.rightPlayerId = createSessionDto.rightPlayerId;
+    gameSession.turnDuration = createSessionDto.turnDuration ?? 60;
+    gameSession.nextTurnEndAt = new Date();
+    gameSession.fieldState = this.initBoard();
 
-  async findAll() {
-    return await this.gameSessionModel.findAll();
+    await gameSession.save();
+    return gameSession;
   }
 
   async findById(id: UUID) {
     return await this.gameSessionModel.findByPk(id);
   }
 
-  async update(id: UUID, updateSessionDto: UpdateSessionDto) {
-    const game_session = await this.findById(id);
-    await game_session!.update(updateSessionDto);
-    return await game_session!.update(updateSessionDto);
-  }
+  // async update(id: UUID, updateSessionDto: UpdateSessionDto) {
+  //   const game_session = await this.findById(id);
+  //   await game_session!.update(updateSessionDto);
+  //   return await game_session!.update(updateSessionDto);
+  // }
 
-  async remove(id: UUID) {
-    return await this.gameSessionModel.destroy({ where: { id } });
+  // remove(id: UUID) {
+  //   return this.gameSessionModel.destroy({ where: { id } });
+  // }
+
+  private initBoard(): GameFieldState {
+    const emptyRow = Array(8).fill(null);
+    const emptyBoard: GameFieldState = Array(8)
+      .fill(null)
+      .map(() => [...emptyRow]);
+
+    const backRowOrder: GameActorTypes[] = [
+      GameActorTypes.Rook,
+      GameActorTypes.Knight,
+      GameActorTypes.Bishop,
+      GameActorTypes.Queen,
+      GameActorTypes.King,
+      GameActorTypes.Bishop,
+      GameActorTypes.Knight,
+      GameActorTypes.Rook,
+    ];
+    // Set black pieces
+    emptyBoard[0] = backRowOrder.map((type) => ({ team: "black", type }));
+    emptyBoard[1] = Array(8).fill({ team: "black", type: GameActorTypes.Pawn });
+
+    // Set white pieces
+    emptyBoard[6] = Array(8).fill({ team: "white", type: GameActorTypes.Pawn });
+    emptyBoard[7] = backRowOrder.map((type) => ({ team: "white", type }));
+
+    return emptyBoard;
   }
 }

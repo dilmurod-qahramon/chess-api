@@ -4,10 +4,11 @@ import { AppService } from "./app.service";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { ConfigModule } from "@nestjs/config";
 import { Player } from "./models/player.model";
-import { SessionModule } from "./session/session.module";
-import { GameSession } from "./models/game_session.model";
-import { Move } from "./models/move.model";
-import { PlayerModule } from './player/player.module';
+import { SessionsModule } from "./session/sessions.module";
+import { GameSession } from "./models/game-session.model";
+import { PlayersModule } from "./player/players.module";
+import { GameTurn } from "./models/game-turn.model";
+import { GameTurnModule } from './game-turn/game-turn.module';
 
 @Module({
   imports: [
@@ -19,12 +20,13 @@ import { PlayerModule } from './player/player.module';
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      models: [GameSession, Move, Player],
+      models: [GameSession, GameTurn, Player],
       autoLoadModels: true,
       synchronize: true,
     }),
-    SessionModule,
-    PlayerModule,
+    SessionsModule,
+    PlayersModule,
+    GameTurnModule,
   ],
   controllers: [AppController],
   providers: [AppService],

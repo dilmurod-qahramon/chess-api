@@ -3,17 +3,17 @@ import { CreatePlayerDto } from "./dto/CreatePlayerDto.dto";
 import { PlayerService } from "./services/player.service";
 import { UUID } from "node:crypto";
 
-@Controller("player")
-export class PlayerController {
+@Controller("players")
+export class PlayersController {
   constructor(private playerService: PlayerService) {}
 
   @Post()
-  async createPlayer(@Body() createPlayerDto: CreatePlayerDto) {
-    return await this.playerService.createPlayer(createPlayerDto);
+  createPlayer(@Body() createPlayerDto: CreatePlayerDto) {
+    return this.playerService.createPlayer(createPlayerDto);
   }
 
   @Get(":id")
-  async getPlayer(@Param("id") id: UUID) {
-    return await this.playerService.getPlayer(id);
+  getPlayer(@Param("id") id: UUID) {
+    return this.playerService.getPlayer(id);
   }
 }

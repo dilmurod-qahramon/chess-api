@@ -11,14 +11,13 @@ export class PlayerService {
     private readonly playerModel: typeof Player,
   ) {}
 
-  async createPlayer(createPlayerDto: CreatePlayerDto): Promise<Player> {
+  createPlayer(createPlayerDto: CreatePlayerDto): Promise<Player> {
     return this.playerModel.create({
       username: createPlayerDto.username,
-      opponent_username: createPlayerDto.opponent_username,
     });
   }
 
-  async getPlayer(id: UUID): Promise<Player | null> {
-    return this.playerModel.findByPk(id);
+  getPlayer(id: UUID): Promise<Player | null> {
+    return this.playerModel.findByPk<Player>(id);
   }
 }
