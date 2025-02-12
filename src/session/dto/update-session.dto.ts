@@ -1,4 +1,6 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateSessionDto } from './create-session.dto';
-
-export class UpdateSessionDto extends PartialType(CreateSessionDto) {}
+export class UpdateSessionDto {
+  nextTurnForPlayer: "left" | "right";
+  moveFrom: string;
+  moveTo: string;
+  turnDuration: number;
+}

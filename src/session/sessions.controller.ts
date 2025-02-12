@@ -26,10 +26,10 @@ export class SessionsController {
     return await this.sessionService.findById(id);
   }
 
-  // @Patch(":id")
-  // update(@Param("id") id: UUID, @Body() updateSessionDto: UpdateSessionDto) {
-  //   return this.sessionService.update(id, updateSessionDto);
-  // }
+  @Patch(":id")
+  update(@Param("id") id: UUID, @Body() updateSessionDto: UpdateSessionDto) {
+    return this.sessionService.update(id, updateSessionDto);
+  }
 
   // @Delete(":id")
   // async delete(@Param("id") id: UUID) {

@@ -11,11 +11,10 @@ export class GameTurnService {
   ) {}
 
   create(gameTurnDto: CreateGameTurnDto) {
-    console.log(gameTurnDto);
-    return this.gameTurnModel.create({
+    return this.gameTurnModel.create<GameTurn>({
       gameSessionId: gameTurnDto.gameSessionId,
       playerId: gameTurnDto.playerId,
-      actions: [gameTurnDto.action],
+      actions: gameTurnDto.actions,
     });
   }
 }

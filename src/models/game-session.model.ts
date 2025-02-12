@@ -27,12 +27,12 @@ export class GameSession extends Model {
   @AllowNull(false)
   @ForeignKey(() => Player)
   @Column({ field: "left_player_id" })
-  leftPlayerId: string; // it can be white player
+  leftPlayerId: string;
 
   @AllowNull(false)
   @ForeignKey(() => Player)
   @Column({ field: "right_player_id" })
-  rightPlayerId: string; // it can be black player
+  rightPlayerId: string;
 
   @CreatedAt
   @Column({ field: "created_at", type: DataType.DATE })
@@ -81,7 +81,7 @@ export enum GameActorTypes {
   Rook = 2,
   Bishop = 3,
   Knight = 4,
-  Pawn = 6,
+  Pawn = 5,
 }
 
 export type GameActor = { team: "white" | "black"; type: GameActorTypes };
