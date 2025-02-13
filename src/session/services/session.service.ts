@@ -1,109 +1,133 @@
 import { Injectable } from "@nestjs/common";
 import { CreateSessionDto } from "../dto/create-session.dto";
 import { InjectModel } from "@nestjs/sequelize";
-import {
-  GameActorTypes,
-  GameFieldState,
-  GameSession,
-} from "src/models/game-session.model";
+import { GameSession } from "src/models/game-session.model";
 import { UUID } from "crypto";
+import { GameFieldState } from "src/interfaces/GameFieldState.type";
+import { GameActorTypes } from "src/interfaces/GameActorTypes.enum";
+import { SessionDto } from "../dto/session.dto";
 import { UpdateSessionDto } from "../dto/update-session.dto";
+import { GameTurn } from "src/models/game-turn.model";
+import { GameTurnActions } from "src/interfaces/GameTurnAction.type";
 
 @Injectable()
 export class SessionService {
+  private static readonly DEFAULT_GAME_FIELD: GameFieldState = [
+    [
+      { team: "black", type: GameActorTypes.Rook },
+      { team: "black", type: GameActorTypes.Knight },
+      { team: "black", type: GameActorTypes.Bishop },
+      { team: "black", type: GameActorTypes.Queen },
+      { team: "black", type: GameActorTypes.King },
+      { team: "black", type: GameActorTypes.Bishop },
+      { team: "black", type: GameActorTypes.Knight },
+      { team: "black", type: GameActorTypes.Rook },
+    ],
+    [
+      { team: "black", type: GameActorTypes.Pawn },
+      { team: "black", type: GameActorTypes.Pawn },
+      { team: "black", type: GameActorTypes.Pawn },
+      { team: "black", type: GameActorTypes.Pawn },
+      { team: "black", type: GameActorTypes.Pawn },
+      { team: "black", type: GameActorTypes.Pawn },
+      { team: "black", type: GameActorTypes.Pawn },
+      { team: "black", type: GameActorTypes.Pawn },
+    ],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [
+      { team: "white", type: GameActorTypes.Pawn },
+      { team: "white", type: GameActorTypes.Pawn },
+      { team: "white", type: GameActorTypes.Pawn },
+      { team: "white", type: GameActorTypes.Pawn },
+      { team: "white", type: GameActorTypes.Pawn },
+      { team: "white", type: GameActorTypes.Pawn },
+      { team: "white", type: GameActorTypes.Pawn },
+      { team: "white", type: GameActorTypes.Pawn },
+    ],
+    [
+      { team: "white", type: GameActorTypes.Rook },
+      { team: "white", type: GameActorTypes.Knight },
+      { team: "white", type: GameActorTypes.Bishop },
+      { team: "white", type: GameActorTypes.Queen },
+      { team: "white", type: GameActorTypes.King },
+      { team: "white", type: GameActorTypes.Bishop },
+      { team: "white", type: GameActorTypes.Knight },
+      { team: "white", type: GameActorTypes.Rook },
+    ],
+  ];
+
   constructor(
     @InjectModel(GameSession)
     private readonly gameSessionModel: typeof GameSession,
+    @InjectModel(GameTurn)
+    private readonly gameTurnModel: typeof GameTurn,
   ) {}
 
   async create(createSessionDto: CreateSessionDto) {
-    return this.gameSessionModel.create({
+    const session = await this.gameSessionModel.create({
       leftPlayerId: createSessionDto.leftPlayerId,
       rightPlayerId: createSessionDto.rightPlayerId,
-      turnDuration: createSessionDto.turnDuration ?? 60,
       nextTurnEndAt: new Date(),
-      fieldState: this.initBoard(),
+      fieldState: SessionService.DEFAULT_GAME_FIELD,
     });
+
+    const dto: SessionDto = {
+      id: session.id,
+      fieldState: session.fieldState,
+    };
+
+    return dto;
   }
 
-  findById(id: UUID) {
-    return this.gameSessionModel.findByPk(id);
+  async findBySessionId(sessionId: UUID) {
+    const session = await this.gameSessionModel.findByPk(sessionId);
+    if (session == null) {
+      return null;
+    }
+    const dto: SessionDto = {
+      id: session.id,
+      fieldState: session.fieldState,
+    };
+
+    return dto;
   }
 
-  async update(id: UUID, updateSessionDto: UpdateSessionDto) {
-    const session = await this.findById(id);
-    const newFieldState = this.updateFieldState(
-      updateSessionDto.moveFrom,
-      updateSessionDto.moveTo,
-      session?.fieldState,
-    );
-    await this.gameSessionModel.update(
-      {
-        nextTurnForPlayer: updateSessionDto.nextTurnForPlayer,
-        fieldState: newFieldState,
-        turnDuration: updateSessionDto.turnDuration ?? 60,
-        nextTurnEndAt: new Date(
-          session!.createdAt.getTime() + updateSessionDto.turnDuration * 1000,
-        ),
-      },
-      {
-        where: {
-          id,
-        },
-      },
-    );
-    return session;
-  }
-
-  // remove(id: UUID) {
-  //   return this.gameSessionModel.destroy({ where: { id } });
-  // }
-
-  private updateFieldState(
-    moveFrom: string,
-    moveTo: string,
-    fieldState?: GameFieldState,
+  async createNewActionsAndUpdateGameFieldState(
+    sessionId: UUID,
+    updateSessionDto: UpdateSessionDto,
   ) {
-    if (fieldState) {
-      const newFieldState = fieldState.map((row) => [...row]);
+    const session = await this.gameSessionModel.findByPk(sessionId);
 
-      const moveFromCol = moveFrom.charCodeAt(0) - "a".charCodeAt(0);
-      const moveFromRow = 8 - Number(moveFrom[1]);
-      const moveToCol = moveTo.charCodeAt(0) - "a".charCodeAt(0);
-      const moveToRow = 8 - Number(moveTo[1]);
-
-      const cell = fieldState[moveFromRow][moveFromCol];
-      if (cell !== null) {
-        newFieldState[moveFromRow][moveFromCol] = null;
-        newFieldState[moveToRow][moveToCol] = cell;
-      }
-      return newFieldState;
+    //check if player is active in this session and session is not completed
+    if (
+      session &&
+      !session.completedAt &&
+      (session.leftPlayerId == updateSessionDto.playerId ||
+        session.rightPlayerId == updateSessionDto.playerId) &&
+      this.validateActions(updateSessionDto.actions)
+    ) {
+      //if successfull, validate the move
+      this.gameTurnModel.create({
+        gameSessionId: sessionId,
+        paleyerId: updateSessionDto.playerId,
+        actions: updateSessionDto.actions,
+      });
     }
   }
 
-  private initBoard(): GameFieldState {
-    const emptyRow = Array(8).fill(null);
-    const emptyBoard: GameFieldState = Array(8)
-      .fill(null)
-      .map(() => [...emptyRow]);
+  validateActions(actions: GameTurnActions): boolean {
+    const [moveAction, swapAction, ugradeAction] = actions;
+    if (moveAction && ugradeAction) {
+      this.canMove(moveAction.oldPlace, moveAction.newPlace);
+      return true;
+    } else if (moveAction || swapAction) {
+      return true;
+    }
 
-    const backRowOrder: GameActorTypes[] = [
-      GameActorTypes.Rook,
-      GameActorTypes.Knight,
-      GameActorTypes.Bishop,
-      GameActorTypes.Queen,
-      GameActorTypes.King,
-      GameActorTypes.Bishop,
-      GameActorTypes.Knight,
-      GameActorTypes.Rook,
-    ];
-    // Set black pieces
-    emptyBoard[0] = backRowOrder.map((type) => ({ team: "black", type }));
-    emptyBoard[1] = Array(8).fill({ team: "black", type: GameActorTypes.Pawn });
-
-    // Set white pieces
-    emptyBoard[6] = Array(8).fill({ team: "white", type: GameActorTypes.Pawn });
-    emptyBoard[7] = backRowOrder.map((type) => ({ team: "white", type }));
-    return emptyBoard;
+    return false;
   }
+  private canMove(oldPlace: [], newPlace: []) {}
 }

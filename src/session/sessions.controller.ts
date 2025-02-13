@@ -1,38 +1,34 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from "@nestjs/common";
+import { Controller, Get, Post, Body, Param } from "@nestjs/common";
 import { SessionService } from "./services/session.service";
 import { CreateSessionDto } from "./dto/create-session.dto";
-import { UpdateSessionDto } from "./dto/update-session.dto";
 import { UUID } from "crypto";
+import { UpdateSessionDto } from "./dto/update-session.dto";
 
 @Controller("sessions")
 export class SessionsController {
   constructor(private readonly sessionService: SessionService) {}
 
   @Post()
-  async create(@Body() createSessionDto: CreateSessionDto) {
+  async createSession(@Body() createSessionDto: CreateSessionDto) {
+    //return session.dto
     return await this.sessionService.create(createSessionDto);
   }
 
-  @Get(":id")
-  async getById(@Param("id") id: UUID) {
-    return await this.sessionService.findById(id);
+  @Get(":sessionId")
+  findBySessionId(@Param("sessionId") sessionId: UUID) {
+    //return session.dto
+    return this.sessionService.findBySessionId(sessionId);
   }
 
-  @Patch(":id")
-  update(@Param("id") id: UUID, @Body() updateSessionDto: UpdateSessionDto) {
-    return this.sessionService.update(id, updateSessionDto);
+  @Post(":sessionId/actions")
+  updateSessionActions(
+    @Param("sessionId") sessionId: UUID,
+    @Body() updateSessionDto: UpdateSessionDto,
+  ) {
+    //add new turn and update session fieldState
+    return this.sessionService.createNewActionsAndUpdateGameFieldState(
+      sessionId,
+      updateSessionDto,
+    );
   }
-
-  // @Delete(":id")
-  // async delete(@Param("id") id: UUID) {
-  //   return await this.sessionService.remove(id);
-  // }
 }

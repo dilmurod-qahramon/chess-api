@@ -15,6 +15,7 @@ import {
 } from "sequelize-typescript";
 import { GameTurn } from "./game-turn.model";
 import { Player } from "./player.model";
+import { GameFieldState } from "src/interfaces/GameFieldState.type";
 
 @Table({ tableName: "game_sessions", timestamps: true })
 export class GameSession extends Model {
@@ -27,12 +28,12 @@ export class GameSession extends Model {
   @AllowNull(false)
   @ForeignKey(() => Player)
   @Column({ field: "left_player_id" })
-  leftPlayerId: string;
+  leftPlayerId: UUID;
 
   @AllowNull(false)
   @ForeignKey(() => Player)
   @Column({ field: "right_player_id" })
-  rightPlayerId: string;
+  rightPlayerId: UUID;
 
   @CreatedAt
   @Column({ field: "created_at", type: DataType.DATE })
@@ -54,8 +55,8 @@ export class GameSession extends Model {
 
   @AllowNull(false)
   @Default("left")
-  @Column({ field: "next_turn_for_player", type: DataType.STRING })
-  nextTurnForPlayer: "left" | "right"; // default 'white'
+  @Column({ field: "current_turn", type: DataType.STRING })
+  CurrentTurn: "left" | "right"; // default 'white'
 
   @AllowNull(false)
   @Column({ field: "next_turn_end_at", type: DataType.DATE })
@@ -74,16 +75,3 @@ export class GameSession extends Model {
   @HasMany(() => GameTurn)
   gameTurns: GameTurn[];
 }
-
-export enum GameActorTypes {
-  King = 0,
-  Queen = 1,
-  Rook = 2,
-  Bishop = 3,
-  Knight = 4,
-  Pawn = 5,
-}
-
-export type GameActor = { team: "white" | "black"; type: GameActorTypes };
-
-export type GameFieldState = (GameActor | null)[][];

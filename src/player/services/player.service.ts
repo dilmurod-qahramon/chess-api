@@ -1,8 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Player } from "src/models/player.model";
-import { CreatePlayerDto } from "../dto/CreatePlayerDto.dto";
-import { UUID } from "node:crypto";
+import { PlayerDto } from "../dto/player.dto";
 
 @Injectable()
 export class PlayerService {
@@ -11,13 +10,29 @@ export class PlayerService {
     private readonly playerModel: typeof Player,
   ) {}
 
-  createPlayer(createPlayerDto: CreatePlayerDto): Promise<Player> {
-    return this.playerModel.create({
-      username: createPlayerDto.username,
+  async findOrCreatePlayer(username: string) {
+    const player = await this.playerModel.findOrCreate({
+      where: { username },
+      defaults: { username },
     });
+
+    const dto: PlayerDto = {
+      id: player[0].id,
+      username: player[0].username,
+    };
+
+    return dto;
   }
 
-  getPlayer(id: UUID): Promise<Player | null> {
-    return this.playerModel.findByPk<Player>(id);
+  async findByUsername(username: string) {
+    const player = await this.playerModel.findOne({ where: { username } });
+    if (player != null) {
+      const dto: PlayerDto = {
+        id: player.id,
+        username: player.username,
+      };
+      return dto;
+    }
+    return player;
   }
 }

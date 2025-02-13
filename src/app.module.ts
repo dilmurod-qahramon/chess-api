@@ -8,7 +8,6 @@ import { SessionsModule } from "./session/sessions.module";
 import { GameSession } from "./models/game-session.model";
 import { PlayersModule } from "./player/players.module";
 import { GameTurn } from "./models/game-turn.model";
-import { GameTurnModule } from './game-turn/game-turn.module';
 
 @Module({
   imports: [
@@ -26,7 +25,6 @@ import { GameTurnModule } from './game-turn/game-turn.module';
     }),
     SessionsModule,
     PlayersModule,
-    GameTurnModule,
   ],
   controllers: [AppController],
   providers: [AppService],

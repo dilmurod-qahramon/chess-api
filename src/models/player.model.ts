@@ -10,6 +10,7 @@ import {
   Model,
   PrimaryKey,
   Table,
+  Unique,
 } from "sequelize-typescript";
 import { GameSession } from "./game-session.model";
 
@@ -22,6 +23,7 @@ export class Player extends Model {
   id: UUID;
 
   @AllowNull(false)
+  @Unique
   @Column({ field: "username", type: DataType.STRING })
   username: string;
 

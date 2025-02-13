@@ -1,19 +1,17 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
-import { CreatePlayerDto } from "./dto/CreatePlayerDto.dto";
+import { Controller, Get, Param, Post } from "@nestjs/common";
 import { PlayerService } from "./services/player.service";
-import { UUID } from "node:crypto";
 
 @Controller("players")
 export class PlayersController {
   constructor(private playerService: PlayerService) {}
-
-  @Post()
-  createPlayer(@Body() createPlayerDto: CreatePlayerDto) {
-    return this.playerService.createPlayer(createPlayerDto);
+  //rename to FindOrCreatePlayer return PlayerDto
+  @Post(":username")
+  findOrCreatePlayer(@Param("username") username: string) {
+    return this.playerService.findOrCreatePlayer(username);
   }
 
-  @Get(":id")
-  getPlayer(@Param("id") id: UUID) {
-    return this.playerService.getPlayer(id);
+  @Get(":username")
+  findPlayerByUsername(@Param("username") username: string) {
+    return this.playerService.findByUsername(username);
   }
 }

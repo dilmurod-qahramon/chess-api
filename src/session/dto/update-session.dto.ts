@@ -1,6 +1,10 @@
+import { UUID } from "crypto";
+import { GameFieldState } from "src/interfaces/GameFieldState.type";
+import { GameTurnActions } from "src/interfaces/GameTurnAction.type";
+
 export class UpdateSessionDto {
-  nextTurnForPlayer: "left" | "right";
-  moveFrom: string;
-  moveTo: string;
-  turnDuration: number;
+  fieldState: GameFieldState;
+  currentTurn: "left" | "right";
+  actions: GameTurnActions;
+  playerId: UUID;
 }

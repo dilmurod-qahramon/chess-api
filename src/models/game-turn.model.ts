@@ -12,8 +12,9 @@ import {
   PrimaryKey,
   Table,
 } from "sequelize-typescript";
-import { GameActorTypes, GameSession } from "./game-session.model";
+import { GameSession } from "./game-session.model";
 import { Player } from "./player.model";
+import { GameTurnActions } from "src/interfaces/GameTurnAction.type";
 
 @Table({ tableName: "game_turns", timestamps: true, updatedAt: false })
 export class GameTurn extends Model {
@@ -53,10 +54,3 @@ export class GameTurn extends Model {
   @BelongsTo(() => GameSession)
   gameSession: GameSession;
 }
-
-export type GameTurnAction =
-  | { type: "move"; oldPlace: string; newPlace: string }
-  | { type: "swap"; place1: string; place2: string }
-  | { type: "upgrade"; place1: string; toType: GameActorTypes };
-
-export type GameTurnActions = GameTurnAction[];
