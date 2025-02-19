@@ -1,10 +1,8 @@
-import { UUID } from "crypto";
-import { GameFieldState } from "src/interfaces/GameFieldState.type";
+import { IsArray, IsNotEmpty } from "class-validator";
 import { GameTurnActions } from "src/interfaces/GameTurnAction.type";
 
 export class UpdateSessionDto {
-  fieldState: GameFieldState;
-  currentTurn: "left" | "right";
+  @IsNotEmpty()
+  @IsArray()
   actions: GameTurnActions;
-  playerId: UUID;
 }

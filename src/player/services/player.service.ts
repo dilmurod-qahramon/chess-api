@@ -1,5 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
+import { UUID } from "crypto";
 import { Player } from "src/models/player.model";
 import { PlayerDto } from "../dto/player.dto";
 
@@ -16,23 +17,23 @@ export class PlayerService {
       defaults: { username },
     });
 
-    const dto: PlayerDto = {
-      id: player[0].id,
-      username: player[0].username,
-    };
-
-    return dto;
+    return new PlayerDto(player[0].dataValues);
   }
 
   async findByUsername(username: string) {
     const player = await this.playerModel.findOne({ where: { username } });
-    if (player != null) {
-      const dto: PlayerDto = {
-        id: player.id,
-        username: player.username,
-      };
-      return dto;
+    if (player == null) {
+      throw new NotFoundException("player is not found!");
     }
-    return player;
+    return new PlayerDto(player.dataValues);
+  }
+
+  async findByPlayerId(playerId: UUID) {
+    const player = await this.playerModel.findByPk(playerId);
+    if (player == null) {
+      throw new NotFoundException("player is not found!");
+    }
+
+    return new PlayerDto(player.dataValues);
   }
 }

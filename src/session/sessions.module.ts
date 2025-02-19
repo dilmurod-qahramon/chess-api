@@ -1,13 +1,14 @@
 import { Module } from "@nestjs/common";
 import { SessionService } from "./services/session.service";
-import { SessionsController } from "./sessions.controller";
+import { SessionController } from "./session.controller";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { GameSession } from "src/models/game-session.model";
 import { GameTurn } from "src/models/game-turn.model";
+import { PlayersModule } from "src/player/players.module";
 
 @Module({
-  imports: [SequelizeModule.forFeature([GameSession, GameTurn])],
-  controllers: [SessionsController],
+  imports: [SequelizeModule.forFeature([GameSession, GameTurn]), PlayersModule],
+  controllers: [SessionController],
   providers: [SessionService],
 })
 export class SessionsModule {}

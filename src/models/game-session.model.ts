@@ -40,8 +40,9 @@ export class GameSession extends Model {
   createdAt: Date;
 
   @AllowNull(false)
+  @Default(60)
   @Column({ field: "turn_duration", type: DataType.INTEGER })
-  turnDuration: number; // default 60 sec
+  turnDuration: number;
 
   @AllowNull(false)
   @Column({ field: "field_state", type: DataType.JSONB })
@@ -56,7 +57,7 @@ export class GameSession extends Model {
   @AllowNull(false)
   @Default("left")
   @Column({ field: "current_turn", type: DataType.STRING })
-  CurrentTurn: "left" | "right"; // default 'white'
+  currentTurn: "left" | "right"; // default 'white'
 
   @AllowNull(false)
   @Column({ field: "next_turn_end_at", type: DataType.DATE })

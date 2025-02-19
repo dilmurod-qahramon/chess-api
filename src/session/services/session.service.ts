@@ -1,133 +1,154 @@
-import { Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { CreateSessionDto } from "../dto/create-session.dto";
-import { InjectModel } from "@nestjs/sequelize";
+import { InjectConnection, InjectModel } from "@nestjs/sequelize";
 import { GameSession } from "src/models/game-session.model";
 import { UUID } from "crypto";
 import { GameFieldState } from "src/interfaces/GameFieldState.type";
-import { GameActorTypes } from "src/interfaces/GameActorTypes.enum";
-import { SessionDto } from "../dto/session.dto";
 import { UpdateSessionDto } from "../dto/update-session.dto";
 import { GameTurn } from "src/models/game-turn.model";
 import { GameTurnActions } from "src/interfaces/GameTurnAction.type";
+import {
+  CHESS_BOARD_SIZE,
+  DEFAULT_GAME_FIELD,
+  ONE_SECOND,
+} from "src/constants";
+import { Sequelize } from "sequelize";
+import { SessionDto } from "../dto/session.dto";
+import { PlayerService } from "src/player/services/player.service";
 
 @Injectable()
 export class SessionService {
-  private static readonly DEFAULT_GAME_FIELD: GameFieldState = [
-    [
-      { team: "black", type: GameActorTypes.Rook },
-      { team: "black", type: GameActorTypes.Knight },
-      { team: "black", type: GameActorTypes.Bishop },
-      { team: "black", type: GameActorTypes.Queen },
-      { team: "black", type: GameActorTypes.King },
-      { team: "black", type: GameActorTypes.Bishop },
-      { team: "black", type: GameActorTypes.Knight },
-      { team: "black", type: GameActorTypes.Rook },
-    ],
-    [
-      { team: "black", type: GameActorTypes.Pawn },
-      { team: "black", type: GameActorTypes.Pawn },
-      { team: "black", type: GameActorTypes.Pawn },
-      { team: "black", type: GameActorTypes.Pawn },
-      { team: "black", type: GameActorTypes.Pawn },
-      { team: "black", type: GameActorTypes.Pawn },
-      { team: "black", type: GameActorTypes.Pawn },
-      { team: "black", type: GameActorTypes.Pawn },
-    ],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [
-      { team: "white", type: GameActorTypes.Pawn },
-      { team: "white", type: GameActorTypes.Pawn },
-      { team: "white", type: GameActorTypes.Pawn },
-      { team: "white", type: GameActorTypes.Pawn },
-      { team: "white", type: GameActorTypes.Pawn },
-      { team: "white", type: GameActorTypes.Pawn },
-      { team: "white", type: GameActorTypes.Pawn },
-      { team: "white", type: GameActorTypes.Pawn },
-    ],
-    [
-      { team: "white", type: GameActorTypes.Rook },
-      { team: "white", type: GameActorTypes.Knight },
-      { team: "white", type: GameActorTypes.Bishop },
-      { team: "white", type: GameActorTypes.Queen },
-      { team: "white", type: GameActorTypes.King },
-      { team: "white", type: GameActorTypes.Bishop },
-      { team: "white", type: GameActorTypes.Knight },
-      { team: "white", type: GameActorTypes.Rook },
-    ],
-  ];
-
   constructor(
     @InjectModel(GameSession)
     private readonly gameSessionModel: typeof GameSession,
     @InjectModel(GameTurn)
     private readonly gameTurnModel: typeof GameTurn,
+    @InjectConnection() private readonly sequelize: Sequelize,
+    private readonly playerService: PlayerService,
   ) {}
 
-  async create(createSessionDto: CreateSessionDto) {
+  async createNewSession(createSessionDto: CreateSessionDto) {
     const session = await this.gameSessionModel.create({
       leftPlayerId: createSessionDto.leftPlayerId,
       rightPlayerId: createSessionDto.rightPlayerId,
+      turnDuration: 60,
       nextTurnEndAt: new Date(),
-      fieldState: SessionService.DEFAULT_GAME_FIELD,
+      fieldState: DEFAULT_GAME_FIELD,
     });
 
-    const dto: SessionDto = {
-      id: session.id,
-      fieldState: session.fieldState,
-    };
-
-    return dto;
+    return session.id;
   }
 
   async findBySessionId(sessionId: UUID) {
     const session = await this.gameSessionModel.findByPk(sessionId);
     if (session == null) {
-      return null;
+      throw new NotFoundException("Invalid session id!");
     }
-    const dto: SessionDto = {
-      id: session.id,
-      fieldState: session.fieldState,
-    };
 
-    return dto;
+    return new SessionDto(session.dataValues);
   }
 
-  async createNewActionsAndUpdateGameFieldState(
-    sessionId: UUID,
+  async addNewActionsToTheSession(
     updateSessionDto: UpdateSessionDto,
+    sessionId: UUID,
   ) {
-    const session = await this.gameSessionModel.findByPk(sessionId);
+    const session = await this.findBySessionId(sessionId);
+    if (!session || session.completedAt) {
+      throw new BadRequestException(
+        "Invalid session id or session is complted!",
+      );
+    }
+    const playerId =
+      session.currentTurn == "left"
+        ? session.leftPlayerId
+        : session.rightPlayerId;
 
-    //check if player is active in this session and session is not completed
-    if (
-      session &&
-      !session.completedAt &&
-      (session.leftPlayerId == updateSessionDto.playerId ||
-        session.rightPlayerId == updateSessionDto.playerId) &&
-      this.validateActions(updateSessionDto.actions)
-    ) {
-      //if successfull, validate the move
-      this.gameTurnModel.create({
-        gameSessionId: sessionId,
-        paleyerId: updateSessionDto.playerId,
-        actions: updateSessionDto.actions,
+    try {
+      const result = await this.sequelize.transaction(async (t) => {
+        this.gameTurnModel.create({
+          gameSessionId: session.id,
+          playerId: playerId,
+          actions: updateSessionDto.actions,
+        });
+
+        const newFieldState = this.updateFieldState(
+          session.fieldState,
+          updateSessionDto.actions,
+          session.currentTurn,
+        );
+
+        this.gameSessionModel.update(
+          {
+            currentTurn: session.currentTurn === "left" ? "right" : "left",
+            fieldState: newFieldState,
+            nextTurnEndAt: new Date(
+              session!.createdAt.getTime() + session.turnDuration * ONE_SECOND,
+            ),
+          },
+          {
+            where: {
+              id: session.id,
+            },
+          },
+        );
+
+        return new SessionDto(await this.findBySessionId(session.id));
       });
+
+      return result;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Transacion failed and rolled back.");
     }
   }
 
-  validateActions(actions: GameTurnActions): boolean {
-    const [moveAction, swapAction, ugradeAction] = actions;
-    if (moveAction && ugradeAction) {
-      this.canMove(moveAction.oldPlace, moveAction.newPlace);
-      return true;
-    } else if (moveAction || swapAction) {
-      return true;
+  private updateFieldState(
+    fieldState: GameFieldState,
+    actions: GameTurnActions,
+    currentTurn: "left" | "right",
+  ): GameFieldState {
+    const [moveAction, swapAction, upgradeAction] = actions;
+    const turn = currentTurn == "left" ? "white" : "black";
+
+    if (moveAction && upgradeAction) {
+      const oldPlaceCol = moveAction.oldPlace.charCodeAt(0) - "a".charCodeAt(0);
+      const oldPlaceRow = CHESS_BOARD_SIZE - Number(moveAction.oldPlace[1]);
+      const newPlaceCol = moveAction.newPlace.charCodeAt(0) - "a".charCodeAt(0);
+      const newPlaceRow = CHESS_BOARD_SIZE - Number(moveAction.newPlace[1]);
+      const oldCell = fieldState[oldPlaceRow][oldPlaceCol];
+      if (oldCell !== null && turn == oldCell.team) {
+        oldCell.type = upgradeAction.toType;
+        fieldState[oldPlaceRow][oldPlaceCol] = null;
+        fieldState[newPlaceRow][newPlaceCol] = oldCell;
+      } else {
+        throw new Error("cell is empty or can't play with opponent's piece!");
+      }
+    } else if ((moveAction && !swapAction) || (!moveAction && swapAction)) {
+      if (moveAction) {
+        const oldPlaceCol =
+          moveAction.oldPlace.charCodeAt(0) - "a".charCodeAt(0);
+        const oldPlaceRow = CHESS_BOARD_SIZE - Number(moveAction.oldPlace[1]);
+        const newPlaceCol =
+          moveAction.newPlace.charCodeAt(0) - "a".charCodeAt(0);
+        const newPlaceRow = CHESS_BOARD_SIZE - Number(moveAction.newPlace[1]);
+        const oldCell = fieldState[oldPlaceRow][oldPlaceCol];
+        if (oldCell !== null && oldCell.team == turn) {
+          fieldState[oldPlaceRow][oldPlaceCol] = null;
+          fieldState[newPlaceRow][newPlaceCol] = oldCell;
+        } else {
+          throw new Error("cell is empty or can't play with opponent's piece!");
+        }
+      } else if (swapAction) {
+        //not implemented yet ..............
+      } else {
+        throw new Error("Not allowed pair of actions!!");
+      }
     }
 
-    return false;
+    return fieldState;
   }
-  private canMove(oldPlace: [], newPlace: []) {}
 }
