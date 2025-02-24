@@ -8,10 +8,6 @@ export class SessionDto {
   @IsUUID()
   id: UUID;
   @Expose()
-  @Transform(
-    ({ value }) => (typeof value === "string" ? JSON.parse(value) : value),
-    { toPlainOnly: true },
-  )
   fieldState: GameFieldState;
   @Expose()
   @IsString()

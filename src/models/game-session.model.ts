@@ -19,7 +19,6 @@ import { GameFieldState } from "src/interfaces/GameFieldState.type";
 
 @Table({ tableName: "game_sessions", timestamps: true })
 export class GameSession extends Model {
-  @IsUUID(4)
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @Column
@@ -46,13 +45,17 @@ export class GameSession extends Model {
 
   @AllowNull(false)
   @Column({ field: "field_state", type: DataType.JSONB })
-  get fieldState(): GameFieldState {
-    return JSON.parse(this.getDataValue("fieldState"));
-  }
+  fieldState: GameFieldState;
 
-  set fieldState(value: GameFieldState) {
-    this.setDataValue("fieldState", JSON.stringify(value));
-  }
+  // @AllowNull(false)
+  // @Column({ field: "field_state", type: DataType.JSONB })
+  // get fieldState(): GameFieldState {
+  //   return JSON.parse(this.getDataValue("fieldState"));
+  // }
+
+  // set fieldState(value: GameFieldState) {
+  //   this.setDataValue("fieldState", JSON.stringify(value));
+  // }
 
   @AllowNull(false)
   @Default("left")

@@ -8,12 +8,15 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   InternalServerErrorException,
+  Patch,
+  HttpCode,
 } from "@nestjs/common";
 import { SessionService } from "./services/session.service";
 import { CreateSessionDto } from "./dto/create-session.dto";
 import { UUID } from "crypto";
 import { UpdateSessionDto } from "./dto/update-session.dto";
 import { PlayerService } from "src/player/services/player.service";
+import { SessionDto } from "./dto/session.dto";
 
 @Controller("sessions")
 @UseInterceptors(ClassSerializerInterceptor)
@@ -44,8 +47,8 @@ export class SessionController {
   }
 
   @Get(":sessionId")
-  findBySessionId(@Param("sessionId") sessionId: UUID) {
-    return this.sessionService.findBySessionId(sessionId);
+  async findBySessionId(@Param("sessionId") sessionId: UUID) {
+    return new SessionDto(await this.sessionService.findBySessionId(sessionId));
   }
 
   @Post(":sessionId/actions")
@@ -62,6 +65,12 @@ export class SessionController {
       throw new InternalServerErrorException();
     }
 
-    return updatedSession;
+    return new SessionDto(updatedSession);
+  }
+
+  @Patch(":sessionId")
+  @HttpCode(204)
+  finishTheSession(@Param("sessionId") sessionId: UUID) {
+    return this.sessionService.finishSession(sessionId);
   }
 }

@@ -16,22 +16,24 @@ export class PlayerController {
   constructor(private playerService: PlayerService) {}
 
   @Post(":username")
-  findOrCreatePlayer(@Param("username") username: string): Promise<PlayerDto> {
-    if (!username || !username.trim()) {
-      throw new BadRequestException("Username cannot be empty");
-    }
-
-    return this.playerService.findOrCreatePlayer(username);
-  }
-
-  @Get(":username")
-  findPlayerByUsername(
+  async findOrCreatePlayer(
     @Param("username") username: string,
   ): Promise<PlayerDto> {
     if (!username || !username.trim()) {
       throw new BadRequestException("Username cannot be empty");
     }
 
-    return this.playerService.findByUsername(username);
+    return new PlayerDto(await this.playerService.findOrCreatePlayer(username));
+  }
+
+  @Get(":username")
+  async findPlayerByUsername(
+    @Param("username") username: string,
+  ): Promise<PlayerDto> {
+    if (!username || !username.trim()) {
+      throw new BadRequestException("Username cannot be empty");
+    }
+
+    return new PlayerDto(await this.playerService.findByUsername(username));
   }
 }

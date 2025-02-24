@@ -1,10 +1,8 @@
 import { Module } from "@nestjs/common";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { ConfigModule } from "@nestjs/config";
 import { Player } from "./models/player.model";
-import { SessionsModule } from "./session/sessions.module";
+import { SessionsModule } from "./session/session.module";
 import { GameSession } from "./models/game-session.model";
 import { PlayersModule } from "./player/players.module";
 import { GameTurn } from "./models/game-turn.model";
@@ -26,7 +24,5 @@ import { GameTurn } from "./models/game-turn.model";
     SessionsModule,
     PlayersModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

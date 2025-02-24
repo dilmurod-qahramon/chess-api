@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { PlayerController } from "./player.controller";
 import { PlayerService } from "./services/player.service";
 import { PlayerDto } from "./dto/player.dto";
+import { BadRequestException } from "@nestjs/common";
 
 describe("PlayerController", () => {
   let controller: PlayerController;
@@ -34,9 +35,9 @@ describe("PlayerController", () => {
   });
 
   describe("findOrCreatePlayer action", () => {
-    it("findOrCreatePlayer should throw BadRequest on invalid username", () => {
-      expect(() => controller.findOrCreatePlayer("")).toThrow(
-        "Username cannot be empty",
+    it("findOrCreatePlayer should throw BadRequest on invalid username", async () => {
+      await expect(controller.findOrCreatePlayer("")).rejects.toThrow(
+        new BadRequestException("Username cannot be empty"),
       );
     });
 
@@ -47,9 +48,9 @@ describe("PlayerController", () => {
   });
 
   describe("findPlayerByUsername action", () => {
-    it("findPlayerByUsername should throw BadRequest on invalid username", () => {
-      expect(() => controller.findPlayerByUsername("")).toThrow(
-        "Username cannot be empty",
+    it("findPlayerByUsername should throw BadRequest on invalid username", async () => {
+      await expect(controller.findPlayerByUsername("")).rejects.toThrow(
+        new BadRequestException("Username cannot be empty"),
       );
     });
 

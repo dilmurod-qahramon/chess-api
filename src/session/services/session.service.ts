@@ -17,8 +17,6 @@ import {
   ONE_SECOND,
 } from "src/constants";
 import { Sequelize } from "sequelize";
-import { SessionDto } from "../dto/session.dto";
-import { PlayerService } from "src/player/services/player.service";
 
 @Injectable()
 export class SessionService {
@@ -28,7 +26,6 @@ export class SessionService {
     @InjectModel(GameTurn)
     private readonly gameTurnModel: typeof GameTurn,
     @InjectConnection() private readonly sequelize: Sequelize,
-    private readonly playerService: PlayerService,
   ) {}
 
   async createNewSession(createSessionDto: CreateSessionDto) {
@@ -49,19 +46,37 @@ export class SessionService {
       throw new NotFoundException("Invalid session id!");
     }
 
-    return new SessionDto(session.dataValues);
+    if (session.completedAt) {
+      throw new BadRequestException("Session is already over.");
+    }
+
+    return session.dataValues;
+  }
+
+  async finishSession(sessionId: UUID) {
+    return await this.gameSessionModel.update(
+      {
+        completedAt: new Date(),
+      },
+      {
+        where: {
+          id: sessionId,
+        },
+      },
+    );
   }
 
   async addNewActionsToTheSession(
     updateSessionDto: UpdateSessionDto,
     sessionId: UUID,
   ) {
-    const session = await this.findBySessionId(sessionId);
+    const session = await this.gameSessionModel.findByPk(sessionId);
     if (!session || session.completedAt) {
       throw new BadRequestException(
         "Invalid session id or session is complted!",
       );
     }
+
     const playerId =
       session.currentTurn == "left"
         ? session.leftPlayerId
@@ -69,11 +84,14 @@ export class SessionService {
 
     try {
       const result = await this.sequelize.transaction(async (t) => {
-        this.gameTurnModel.create({
-          gameSessionId: session.id,
-          playerId: playerId,
-          actions: updateSessionDto.actions,
-        });
+        await this.gameTurnModel.create(
+          {
+            gameSessionId: session.id,
+            playerId: playerId,
+            actions: updateSessionDto.actions,
+          },
+          { transaction: t },
+        );
 
         const newFieldState = this.updateFieldState(
           session.fieldState,
@@ -81,7 +99,7 @@ export class SessionService {
           session.currentTurn,
         );
 
-        this.gameSessionModel.update(
+        const updatedSession = await this.gameSessionModel.update(
           {
             currentTurn: session.currentTurn === "left" ? "right" : "left",
             fieldState: newFieldState,
@@ -93,10 +111,12 @@ export class SessionService {
             where: {
               id: session.id,
             },
+            transaction: t,
+            returning: true,
           },
         );
 
-        return new SessionDto(await this.findBySessionId(session.id));
+        return updatedSession[1][0];
       });
 
       return result;
@@ -129,16 +149,16 @@ export class SessionService {
       }
     } else if ((moveAction && !swapAction) || (!moveAction && swapAction)) {
       if (moveAction) {
-        const oldPlaceCol =
+        const oldCellCol =
           moveAction.oldPlace.charCodeAt(0) - "a".charCodeAt(0);
-        const oldPlaceRow = CHESS_BOARD_SIZE - Number(moveAction.oldPlace[1]);
-        const newPlaceCol =
+        const oldCellRow = CHESS_BOARD_SIZE - Number(moveAction.oldPlace[1]);
+        const newCellCol =
           moveAction.newPlace.charCodeAt(0) - "a".charCodeAt(0);
-        const newPlaceRow = CHESS_BOARD_SIZE - Number(moveAction.newPlace[1]);
-        const oldCell = fieldState[oldPlaceRow][oldPlaceCol];
+        const newCellRow = CHESS_BOARD_SIZE - Number(moveAction.newPlace[1]);
+        const oldCell = fieldState[oldCellRow][oldCellCol];
         if (oldCell !== null && oldCell.team == turn) {
-          fieldState[oldPlaceRow][oldPlaceCol] = null;
-          fieldState[newPlaceRow][newPlaceCol] = oldCell;
+          fieldState[oldCellRow][oldCellCol] = null;
+          fieldState[newCellRow][newCellCol] = oldCell;
         } else {
           throw new Error("cell is empty or can't play with opponent's piece!");
         }

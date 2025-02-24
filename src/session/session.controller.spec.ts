@@ -32,7 +32,7 @@ describe("SessionController", () => {
         .fn()
         .mockImplementation((dto: { actions: string }, id: string) => {
           if (id == "ran-dom-sess-ion-id") {
-            return "working succesfully";
+            return { message: "working succesfully" };
           } else {
             throw new InternalServerErrorException();
           }
@@ -76,9 +76,7 @@ describe("SessionController", () => {
 
   describe("findBySessionId action", () => {
     it("should return sessionDto", async () => {
-      expect(
-        await controller.findBySessionId("ran-dom-sess-ion-id"),
-      ).toStrictEqual({
+      expect(await controller.findBySessionId("ran-dom-sess-ion-id")).toEqual({
         id: "ran-dom-sess-ion-id",
         fieldState: "test field state",
       });
@@ -87,11 +85,11 @@ describe("SessionController", () => {
 
   describe("addNewActionsToTheSession action", () => {
     it("should return sessionDto on success", async () => {
-      expect(
-        await controller.addActionsToSession("ran-dom-sess-ion-id", {
+      await expect(
+        controller.addActionsToSession("ran-dom-sess-ion-id", {
           actions: [null, null, null],
         }),
-      ).toBe("working succesfully");
+      ).resolves.toEqual({ message: "working succesfully" });
     });
 
     it("should throw internal server error", async () => {
