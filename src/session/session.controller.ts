@@ -10,6 +10,7 @@ import {
   InternalServerErrorException,
   Patch,
   HttpCode,
+  UseGuards,
 } from "@nestjs/common";
 import { SessionService } from "./services/session.service";
 import { CreateSessionDto } from "./dto/create-session.dto";
@@ -17,9 +18,11 @@ import { UUID } from "crypto";
 import { UpdateSessionDto } from "./dto/update-session.dto";
 import { PlayerService } from "src/player/services/player.service";
 import { SessionDto } from "./dto/session.dto";
+import { AuthGuard } from "src/auth/guards/auth.guard";
 
-@Controller("sessions")
+@UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
+@Controller("sessions")
 export class SessionController {
   constructor(
     private readonly sessionService: SessionService,

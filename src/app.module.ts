@@ -6,6 +6,8 @@ import { SessionsModule } from "./session/session.module";
 import { GameSession } from "./models/game-session.model";
 import { PlayersModule } from "./player/players.module";
 import { GameTurn } from "./models/game-turn.model";
+import { AuthModule } from "./auth/auth.module";
+import { User } from "./models/user.model";
 
 @Module({
   imports: [
@@ -17,12 +19,13 @@ import { GameTurn } from "./models/game-turn.model";
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      models: [GameSession, GameTurn, Player],
+      models: [GameSession, GameTurn, Player, User],
       autoLoadModels: true,
       synchronize: true,
     }),
     SessionsModule,
     PlayersModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

@@ -6,7 +6,6 @@ import {
   DataType,
   Default,
   HasMany,
-  IsUUID,
   Model,
   PrimaryKey,
   Table,
@@ -16,7 +15,6 @@ import { GameSession } from "./game-session.model";
 
 @Table({ tableName: "players", timestamps: true, updatedAt: false })
 export class Player extends Model {
-  @IsUUID(4)
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @Column

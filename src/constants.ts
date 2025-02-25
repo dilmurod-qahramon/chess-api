@@ -1,6 +1,12 @@
 import { GameActorTypes } from "src/interfaces/GameActorTypes.enum";
 import { GameFieldState } from "src/interfaces/GameFieldState.type";
 
+export const jwtConstants = {
+  secret: "Very long and secure secret key should be here",
+};
+
+export const CHESS_BOARD_SIZE = 8;
+export const ONE_SECOND = 1000;
 export const DEFAULT_GAME_FIELD: GameFieldState = [
   [
     { team: "black", type: GameActorTypes.Rook },
@@ -47,6 +53,3 @@ export const DEFAULT_GAME_FIELD: GameFieldState = [
     { team: "white", type: GameActorTypes.Rook },
   ],
 ];
-
-export const CHESS_BOARD_SIZE = 8;
-export const ONE_SECOND = 1000;

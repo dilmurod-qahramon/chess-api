@@ -9,8 +9,6 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
-      //add before production
-      // disableErrorMessages: true,
     }),
   );
   await app.listen(process.env.PORT ?? 3000);

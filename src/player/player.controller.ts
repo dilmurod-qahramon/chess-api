@@ -5,13 +5,16 @@ import {
   Get,
   Param,
   Post,
+  UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
 import { PlayerService } from "./services/player.service";
 import { PlayerDto } from "./dto/player.dto";
+import { AuthGuard } from "src/auth/guards/auth.guard";
 
-@Controller("players")
+@UseGuards(AuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
+@Controller("players")
 export class PlayerController {
   constructor(private playerService: PlayerService) {}
 

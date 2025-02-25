@@ -25,7 +25,8 @@ export class SessionService {
     private readonly gameSessionModel: typeof GameSession,
     @InjectModel(GameTurn)
     private readonly gameTurnModel: typeof GameTurn,
-    @InjectConnection() private readonly sequelize: Sequelize,
+    @InjectConnection()
+    private readonly sequelize: Sequelize,
   ) {}
 
   async createNewSession(createSessionDto: CreateSessionDto) {
