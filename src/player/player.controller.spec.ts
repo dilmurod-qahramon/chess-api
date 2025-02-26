@@ -2,19 +2,26 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { PlayerController } from "./player.controller";
 import { PlayerService } from "./services/player.service";
 import { PlayerDto } from "./dto/player.dto";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { AuthGuard } from "src/auth/guards/auth.guard";
+import { Player } from "src/models/player.model";
 
 describe("PlayerController", () => {
   let controller: PlayerController;
   let mockPlayerService: Partial<PlayerService>;
-  const playerDto: PlayerDto = {
-    username: "testUser",
-  };
+  const playerDto = new PlayerDto();
+  playerDto.username = "testUser";
 
   beforeEach(async () => {
     mockPlayerService = {
-      findOrCreatePlayer: jest.fn().mockResolvedValue(playerDto),
-      findByUsername: jest.fn().mockResolvedValue(playerDto),
+      findOrCreatePlayer: jest.fn().mockImplementation((username: string) => {
+        playerDto.username = username;
+        return [{ dataValues: playerDto }];
+      }),
+      findByUsername: jest.fn().mockImplementation((username: string) => {
+        playerDto.username = username;
+        return { dataValues: playerDto };
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -25,9 +32,16 @@ describe("PlayerController", () => {
           useValue: mockPlayerService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile();
 
     controller = module.get<PlayerController>(PlayerController);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it("should be defined", () => {
@@ -36,27 +50,50 @@ describe("PlayerController", () => {
 
   describe("findOrCreatePlayer action", () => {
     it("findOrCreatePlayer should throw BadRequest on invalid username", async () => {
-      await expect(controller.findOrCreatePlayer("")).rejects.toThrow(
-        new BadRequestException("Username cannot be empty"),
+      const result = controller.findOrCreatePlayer("");
+      await expect(result).rejects.toThrow(
+        new BadRequestException(
+          "Username cannot be empty or less than 5 characters.",
+        ),
       );
     });
 
     it("findOrCreatePlayer should return PlayerDto", async () => {
-      const result = await controller.findOrCreatePlayer("testUser");
-      expect(result).toEqual({ username: "testUser" });
+      const result = await controller.findOrCreatePlayer(playerDto.username);
+
+      expect(mockPlayerService.findOrCreatePlayer).toHaveBeenCalledWith(
+        playerDto.username,
+      );
+      expect(mockPlayerService.findOrCreatePlayer!("testUser")).toEqual([
+        { dataValues: { username: "testUser" } },
+      ]);
+      expect(result).toEqual(playerDto);
     });
   });
 
   describe("findPlayerByUsername action", () => {
     it("findPlayerByUsername should throw BadRequest on invalid username", async () => {
       await expect(controller.findPlayerByUsername("")).rejects.toThrow(
-        new BadRequestException("Username cannot be empty"),
+        new BadRequestException(
+          "Username cannot be empty or less than 5 characters.",
+        ),
+      );
+    });
+
+    it("should throw not found exception when findPlayerByUsername return null", async () => {
+      jest.spyOn(mockPlayerService, "findByUsername").mockResolvedValue(null);
+      await expect(
+        controller.findPlayerByUsername(playerDto.username),
+      ).rejects.toThrow(
+        new NotFoundException(
+          `Player with username "${playerDto.username}" is not found.`,
+        ),
       );
     });
 
     it("findPlayerByUsername should return PlayerDto", async () => {
-      const result = await controller.findPlayerByUsername("testUser");
-      expect(result).toEqual({ username: "testUser" });
+      const result = await controller.findPlayerByUsername(playerDto.username);
+      expect(result).toEqual(playerDto);
     });
   });
 });

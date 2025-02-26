@@ -1,16 +1,12 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { CreateSessionDto } from "../dto/create-session.dto";
 import { InjectConnection, InjectModel } from "@nestjs/sequelize";
 import { GameSession } from "src/models/game-session.model";
 import { UUID } from "crypto";
-import { GameFieldState } from "src/interfaces/GameFieldState.type";
+import { GameFieldState } from "src/types/GameFieldState.type";
 import { UpdateSessionDto } from "../dto/update-session.dto";
 import { GameTurn } from "src/models/game-turn.model";
-import { GameTurnActions } from "src/interfaces/GameTurnAction.type";
+import { GameTurnActions } from "src/types/GameTurnAction.type";
 import {
   CHESS_BOARD_SIZE,
   DEFAULT_GAME_FIELD,
@@ -41,21 +37,12 @@ export class SessionService {
     return session.id;
   }
 
-  async findBySessionId(sessionId: UUID) {
-    const session = await this.gameSessionModel.findByPk(sessionId);
-    if (session == null) {
-      throw new NotFoundException("Invalid session id!");
-    }
-
-    if (session.completedAt) {
-      throw new BadRequestException("Session is already over.");
-    }
-
-    return session.dataValues;
+  findBySessionId(sessionId: UUID) {
+    return this.gameSessionModel.findByPk(sessionId);
   }
 
-  async finishSession(sessionId: UUID) {
-    return await this.gameSessionModel.update(
+  finishSession(sessionId: UUID) {
+    return this.gameSessionModel.update(
       {
         completedAt: new Date(),
       },

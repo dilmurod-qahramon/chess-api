@@ -11,6 +11,7 @@ import {
   Patch,
   HttpCode,
   UseGuards,
+  NotFoundException,
 } from "@nestjs/common";
 import { SessionService } from "./services/session.service";
 import { CreateSessionDto } from "./dto/create-session.dto";
@@ -21,7 +22,6 @@ import { SessionDto } from "./dto/session.dto";
 import { AuthGuard } from "src/auth/guards/auth.guard";
 
 @UseGuards(AuthGuard)
-@UseInterceptors(ClassSerializerInterceptor)
 @Controller("sessions")
 export class SessionController {
   constructor(
@@ -51,7 +51,12 @@ export class SessionController {
 
   @Get(":sessionId")
   async findBySessionId(@Param("sessionId") sessionId: UUID) {
-    return new SessionDto(await this.sessionService.findBySessionId(sessionId));
+    const session = await this.sessionService.findBySessionId(sessionId);
+    if (session == null) {
+      throw new NotFoundException("Invalid session id!");
+    }
+
+    return new SessionDto(session.dataValues);
   }
 
   @Post(":sessionId/actions")
@@ -64,11 +69,7 @@ export class SessionController {
       sessionId,
     );
 
-    if (updatedSession == null) {
-      throw new InternalServerErrorException();
-    }
-
-    return new SessionDto(updatedSession);
+    return new SessionDto(updatedSession.dataValues);
   }
 
   @Patch(":sessionId")

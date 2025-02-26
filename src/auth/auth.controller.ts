@@ -17,7 +17,7 @@ export class AuthController {
 
   @Post("login")
   signIn(@Body() loginDto: LoginUserDto) {
-    return this.authService.signIn(loginDto.username, loginDto.password);
+    return this.authService.signIn(loginDto.username.trim(), loginDto.password);
   }
 
   @Post("register")

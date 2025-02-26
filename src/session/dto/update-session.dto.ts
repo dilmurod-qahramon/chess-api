@@ -1,5 +1,5 @@
 import { IsArray, IsNotEmpty } from "class-validator";
-import { GameTurnActions } from "src/interfaces/GameTurnAction.type";
+import { GameTurnActions } from "src/types/GameTurnAction.type";
 
 export class UpdateSessionDto {
   @IsNotEmpty()

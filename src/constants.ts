@@ -1,5 +1,5 @@
-import { GameActorTypes } from "src/interfaces/GameActorTypes.enum";
-import { GameFieldState } from "src/interfaces/GameFieldState.type";
+import { GameActorTypes } from "src/types/GameActorTypes.enum";
+import { GameFieldState } from "src/types/GameFieldState.type";
 
 export const jwtConstants = {
   secret: "Very long and secure secret key should be here",

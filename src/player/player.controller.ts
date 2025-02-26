@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Post,
   UseGuards,
@@ -13,30 +14,42 @@ import { PlayerDto } from "./dto/player.dto";
 import { AuthGuard } from "src/auth/guards/auth.guard";
 
 @UseGuards(AuthGuard)
-@UseInterceptors(ClassSerializerInterceptor)
 @Controller("players")
 export class PlayerController {
   constructor(private playerService: PlayerService) {}
 
   @Post(":username")
-  async findOrCreatePlayer(
-    @Param("username") username: string,
-  ): Promise<PlayerDto> {
-    if (!username || !username.trim()) {
-      throw new BadRequestException("Username cannot be empty");
+  async findOrCreatePlayer(@Param("username") username: string) {
+    username = username?.trim();
+    if (!username || username.length < 5) {
+      throw new BadRequestException(
+        "Username cannot be empty or less than 5 characters.",
+      );
     }
 
-    return new PlayerDto(await this.playerService.findOrCreatePlayer(username));
+    const player = await this.playerService.findOrCreatePlayer(username);
+    return new PlayerDto(player[0].dataValues);
   }
 
   @Get(":username")
   async findPlayerByUsername(
     @Param("username") username: string,
   ): Promise<PlayerDto> {
-    if (!username || !username.trim()) {
-      throw new BadRequestException("Username cannot be empty");
+    username = username?.trim();
+    if (!username || username.length < 5) {
+      throw new BadRequestException(
+        "Username cannot be empty or less than 5 characters.",
+      );
     }
 
-    return new PlayerDto(await this.playerService.findByUsername(username));
+    const player = await this.playerService.findByUsername(username);
+
+    if (!player) {
+      throw new NotFoundException(
+        `Player with username "${username}" is not found.`,
+      );
+    }
+
+    return new PlayerDto(player.dataValues);
   }
 }

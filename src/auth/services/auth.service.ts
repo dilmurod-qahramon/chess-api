@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { JwtService } from "@nestjs/jwt";
 import { RegisterUserDto } from "../dto/register-user.dto";
@@ -17,10 +21,15 @@ export class AuthService {
     password: string,
   ): Promise<{ access_token: string }> {
     const user = await this.usersService.findByUsername(username);
+    if (user == null) {
+      throw new NotFoundException("User is not found!");
+    }
+
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException();
     }
+
     const payload = { sub: user.id, username: user.username };
     return {
       access_token: await this.jwtService.signAsync(payload),

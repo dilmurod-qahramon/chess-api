@@ -10,22 +10,15 @@ export class UsersService {
     private readonly userModel: typeof User,
   ) {}
 
-  async findByUsername(username: string): Promise<User> {
-    const user = await this.userModel.findOne({ where: { username } });
-    if (user == null) {
-      throw new NotFoundException("User is not found!");
-    }
-
-    return user;
+  findByUsername(username: string): Promise<User | null> {
+    return this.userModel.findOne({ where: { username } });
   }
 
-  async createNewUser(registerUserDto: RegisterUserDto): Promise<User> {
-    const user = await this.userModel.create({
+  createNewUser(registerUserDto: RegisterUserDto): Promise<User> {
+    return this.userModel.create({
       username: registerUserDto.username,
       email: registerUserDto.email,
       passwordHash: registerUserDto.password,
     });
-
-    return user;
   }
 }

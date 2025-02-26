@@ -15,7 +15,7 @@ import {
 } from "sequelize-typescript";
 import { GameTurn } from "./game-turn.model";
 import { Player } from "./player.model";
-import { GameFieldState } from "src/interfaces/GameFieldState.type";
+import { GameFieldState } from "src/types/GameFieldState.type";
 
 @Table({ tableName: "game_sessions", timestamps: true })
 export class GameSession extends Model {

@@ -14,7 +14,7 @@ export class PlayerDto {
   @Exclude()
   createdAt?: Date;
 
-  constructor(partial: Partial<PlayerDto>) {
+  constructor(partial?: Partial<PlayerDto>) {
     Object.assign(this, partial);
   }
 }

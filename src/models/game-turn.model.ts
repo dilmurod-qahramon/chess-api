@@ -14,7 +14,7 @@ import {
 } from "sequelize-typescript";
 import { GameSession } from "./game-session.model";
 import { Player } from "./player.model";
-import { GameTurnActions } from "src/interfaces/GameTurnAction.type";
+import { GameTurnActions } from "src/types/GameTurnAction.type";
 
 @Table({ tableName: "game_turns", timestamps: true, updatedAt: false })
 export class GameTurn extends Model {

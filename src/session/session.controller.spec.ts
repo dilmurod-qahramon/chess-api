@@ -5,12 +5,18 @@ import { PlayerService } from "../player/services/player.service";
 import {
   BadRequestException,
   InternalServerErrorException,
+  NotFoundException,
 } from "@nestjs/common";
+import { AuthGuard } from "src/auth/guards/auth.guard";
+import { SessionDto } from "./dto/session.dto";
 
 describe("SessionController", () => {
   let controller: SessionController;
   let mockSessionService: Partial<SessionService>;
   let mockPlayerService: Partial<PlayerService>;
+  const sessionDto = new SessionDto();
+  sessionDto.id = "1-1-1-1-1";
+  sessionDto.currentTurn = "left";
 
   beforeEach(async () => {
     mockPlayerService = {
@@ -24,19 +30,12 @@ describe("SessionController", () => {
     };
     mockSessionService = {
       createNewSession: jest.fn().mockResolvedValue("some-id"),
-      findBySessionId: jest.fn().mockResolvedValue({
-        id: "ran-dom-sess-ion-id",
-        fieldState: "test field state",
+      findBySessionId: jest.fn().mockImplementation(() => {
+        return { dataValues: sessionDto };
       }),
-      addNewActionsToTheSession: jest
-        .fn()
-        .mockImplementation((dto: { actions: string }, id: string) => {
-          if (id == "ran-dom-sess-ion-id") {
-            return { message: "working succesfully" };
-          } else {
-            throw new InternalServerErrorException();
-          }
-        }),
+      addNewActionsToTheSession: jest.fn().mockImplementation(() => {
+        return { dataValues: sessionDto };
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -45,7 +44,10 @@ describe("SessionController", () => {
         { provide: SessionService, useValue: mockSessionService },
         { provide: PlayerService, useValue: mockPlayerService },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile();
 
     controller = module.get<SessionController>(SessionController);
   });
@@ -77,27 +79,26 @@ describe("SessionController", () => {
   describe("findBySessionId action", () => {
     it("should return sessionDto", async () => {
       expect(await controller.findBySessionId("ran-dom-sess-ion-id")).toEqual({
-        id: "ran-dom-sess-ion-id",
-        fieldState: "test field state",
+        currentTurn: "left",
+        id: "1-1-1-1-1",
       });
+    });
+
+    it("should throw not found exception if session is null", async () => {
+      jest.spyOn(mockSessionService, "findBySessionId").mockResolvedValue(null);
+      const result = controller.findBySessionId("1-1-1-1-1");
+      await expect(result).rejects.toThrow(
+        new NotFoundException("Invalid session id!"),
+      );
     });
   });
 
   describe("addNewActionsToTheSession action", () => {
     it("should return sessionDto on success", async () => {
-      await expect(
-        controller.addActionsToSession("ran-dom-sess-ion-id", {
-          actions: [null, null, null],
-        }),
-      ).resolves.toEqual({ message: "working succesfully" });
-    });
-
-    it("should throw internal server error", async () => {
-      await expect(
-        controller.addActionsToSession("in-v-al-id-id", {
-          actions: [null, null, null],
-        }),
-      ).rejects.toThrow(new InternalServerErrorException());
+      const result = controller.addActionsToSession("ran-dom-sess-ion-id", {
+        actions: [null, null, null],
+      });
+      expect(result).resolves.toEqual(sessionDto);
     });
   });
 });

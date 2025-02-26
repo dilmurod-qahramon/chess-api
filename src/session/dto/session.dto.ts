@@ -1,7 +1,7 @@
 import { Exclude, Expose, Transform } from "class-transformer";
 import { IsString, IsUUID } from "class-validator";
 import { UUID } from "crypto";
-import { GameFieldState } from "src/interfaces/GameFieldState.type";
+import { GameFieldState } from "src/types/GameFieldState.type";
 
 export class SessionDto {
   @Expose()
@@ -27,7 +27,7 @@ export class SessionDto {
   @Exclude()
   updatedAt: Date;
 
-  constructor(partial: Partial<SessionDto>) {
+  constructor(partial?: Partial<SessionDto>) {
     Object.assign(this, partial);
   }
 }
