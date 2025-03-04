@@ -17,12 +17,12 @@ import { GameSession } from "./game-session.model";
 export class Player extends Model {
   @PrimaryKey
   @Default(DataType.UUIDV4)
-  @Column
+  @Column({ type: DataType.UUID })
   id: UUID;
 
   @AllowNull(false)
   @Unique
-  @Column({ field: "username", type: DataType.STRING })
+  @Column(DataType.STRING)
   username: string;
 
   @CreatedAt

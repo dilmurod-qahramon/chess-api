@@ -8,7 +8,6 @@ import {
   Default,
   ForeignKey,
   HasMany,
-  IsUUID,
   Model,
   PrimaryKey,
   Table,
@@ -21,7 +20,7 @@ import { GameFieldState } from "src/types/GameFieldState.type";
 export class GameSession extends Model {
   @PrimaryKey
   @Default(DataType.UUIDV4)
-  @Column
+  @Column({ type: DataType.UUID })
   id: UUID;
 
   @AllowNull(false)

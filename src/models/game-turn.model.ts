@@ -18,10 +18,9 @@ import { GameTurnActions } from "src/types/GameTurnAction.type";
 
 @Table({ tableName: "game_turns", timestamps: true, updatedAt: false })
 export class GameTurn extends Model {
-  @IsUUID(4)
   @PrimaryKey
   @Default(DataType.UUIDV4)
-  @Column
+  @Column({ type: DataType.UUID })
   id: UUID;
 
   @AllowNull(false)
@@ -34,8 +33,8 @@ export class GameTurn extends Model {
   @Column({ field: "player_id" })
   playerId: string;
 
-  @Column({ field: "created_at", type: DataType.DATE })
   @CreatedAt
+  @Column({ field: "created_at", type: DataType.DATE })
   createdAt: Date;
 
   @AllowNull(false)

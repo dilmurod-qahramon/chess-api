@@ -1,13 +1,11 @@
 import {
   BadRequestException,
-  ClassSerializerInterceptor,
   Controller,
   Get,
   NotFoundException,
   Param,
   Post,
   UseGuards,
-  UseInterceptors,
 } from "@nestjs/common";
 import { PlayerService } from "./services/player.service";
 import { PlayerDto } from "./dto/player.dto";
@@ -41,8 +39,9 @@ export class PlayerController {
         "Username cannot be empty or less than 5 characters.",
       );
     }
-
+    console.log(username);
     const player = await this.playerService.findByUsername(username);
+    console.log(player);
 
     if (!player) {
       throw new NotFoundException(

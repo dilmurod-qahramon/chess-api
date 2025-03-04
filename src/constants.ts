@@ -7,6 +7,8 @@ export const jwtConstants = {
 
 export const CHESS_BOARD_SIZE = 8;
 export const ONE_SECOND = 1000;
+export const ACCESS_TOKEN_EXP = "10h"; //'10h'
+export const REFRESH_TOKEN_EXP = "7d"; // a week
 export const DEFAULT_GAME_FIELD: GameFieldState = [
   [
     { team: "black", type: GameActorTypes.Rook },

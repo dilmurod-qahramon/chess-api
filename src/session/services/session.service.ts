@@ -133,7 +133,9 @@ export class SessionService {
         fieldState[oldPlaceRow][oldPlaceCol] = null;
         fieldState[newPlaceRow][newPlaceCol] = oldCell;
       } else {
-        throw new Error("cell is empty or can't play with opponent's piece!");
+        throw new BadRequestException(
+          "cell is empty or can't play with opponent's piece!",
+        );
       }
     } else if ((moveAction && !swapAction) || (!moveAction && swapAction)) {
       if (moveAction) {
@@ -148,12 +150,14 @@ export class SessionService {
           fieldState[oldCellRow][oldCellCol] = null;
           fieldState[newCellRow][newCellCol] = oldCell;
         } else {
-          throw new Error("cell is empty or can't play with opponent's piece!");
+          throw new BadRequestException(
+            "cell is empty or can't play with opponent's piece!",
+          );
         }
       } else if (swapAction) {
         //not implemented yet ..............
       } else {
-        throw new Error("Not allowed pair of actions!!");
+        throw new BadRequestException("Not allowed pair of actions!!");
       }
     }
 
