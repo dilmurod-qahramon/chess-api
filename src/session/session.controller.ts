@@ -5,9 +5,6 @@ import {
   Body,
   Param,
   BadRequestException,
-  UseInterceptors,
-  ClassSerializerInterceptor,
-  InternalServerErrorException,
   Patch,
   HttpCode,
   UseGuards,
@@ -20,8 +17,11 @@ import { UpdateSessionDto } from "./dto/update-session.dto";
 import { PlayerService } from "src/player/services/player.service";
 import { SessionDto } from "./dto/session.dto";
 import { AuthGuard } from "src/auth/guards/auth.guard";
+import { Roles } from "src/auth/decorators/roles.decorator";
+import { RolesGuard } from "src/auth/guards/roles.guard";
+import { RolesEnum } from "src/types/roles.enum";
 
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller("sessions")
 export class SessionController {
   constructor(
@@ -29,7 +29,26 @@ export class SessionController {
     private readonly playerService: PlayerService,
   ) {}
 
+  @Get(":sessionId")
+  @Roles(RolesEnum.Moderator, RolesEnum.Owner)
+  async findBySessionId(@Param("sessionId") sessionId: UUID) {
+    const session = await this.sessionService.findBySessionId(sessionId);
+    if (session == null) {
+      throw new NotFoundException("Invalid session id!");
+    }
+
+    return new SessionDto(session.dataValues);
+  }
+
+  @Get()
+  @Roles(RolesEnum.Admin)
+  async getAllSessions() {
+    const sessions = await this.sessionService.getAllSessions();
+    return sessions.map((session) => new SessionDto(session.dataValues));
+  }
+
   @Post()
+  @Roles(RolesEnum.Owner)
   async createSession(@Body() createSessionDto: CreateSessionDto) {
     const player1 = await this.playerService.findByPlayerId(
       createSessionDto.leftPlayerId as UUID,
@@ -49,17 +68,8 @@ export class SessionController {
     return this.sessionService.createNewSession(createSessionDto);
   }
 
-  @Get(":sessionId")
-  async findBySessionId(@Param("sessionId") sessionId: UUID) {
-    const session = await this.sessionService.findBySessionId(sessionId);
-    if (session == null) {
-      throw new NotFoundException("Invalid session id!");
-    }
-
-    return new SessionDto(session.dataValues);
-  }
-
   @Post(":sessionId/actions")
+  @Roles(RolesEnum.Owner)
   async addActionsToSession(
     @Param("sessionId") sessionId: UUID,
     @Body() updateSessionDto: UpdateSessionDto,
@@ -73,6 +83,7 @@ export class SessionController {
   }
 
   @Patch(":sessionId")
+  @Roles(RolesEnum.Moderator, RolesEnum.Owner)
   @HttpCode(204)
   finishTheSession(@Param("sessionId") sessionId: UUID) {
     return this.sessionService.finishSession(sessionId);

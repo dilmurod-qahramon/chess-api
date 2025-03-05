@@ -15,13 +15,14 @@ import {
 import { GameSession } from "./game-session.model";
 import { Player } from "./player.model";
 import { GameTurnActions } from "src/types/GameTurnAction.type";
+import { UUIDV4 } from "sequelize";
 
 @Table({ tableName: "game_turns", timestamps: true, updatedAt: false })
 export class GameTurn extends Model {
   @PrimaryKey
-  @Default(DataType.UUIDV4)
-  @Column({ type: DataType.UUID })
-  id: UUID;
+  @Default(UUIDV4)
+  @Column
+  id: string;
 
   @AllowNull(false)
   @ForeignKey(() => GameSession)

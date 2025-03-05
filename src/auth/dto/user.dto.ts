@@ -1,5 +1,6 @@
 import { Exclude, Expose } from "class-transformer";
 import { UUID } from "crypto";
+import { Role } from "src/models/role.model";
 
 export class UserDto {
   @Exclude()
@@ -10,8 +11,8 @@ export class UserDto {
   passwordHash: string;
   @Expose()
   email: string;
-  @Exclude()
-  hashedRefreshToken: string;
+  @Expose()
+  roles: Role[];
   @Expose()
   updatedAt: Date;
 

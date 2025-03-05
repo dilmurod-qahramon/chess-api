@@ -1,4 +1,3 @@
-import { UUID } from "node:crypto";
 import {
   AllowNull,
   Column,
@@ -12,13 +11,14 @@ import {
   Unique,
 } from "sequelize-typescript";
 import { GameSession } from "./game-session.model";
+import { UUIDV4 } from "sequelize";
 
 @Table({ tableName: "players", timestamps: true, updatedAt: false })
 export class Player extends Model {
   @PrimaryKey
-  @Default(DataType.UUIDV4)
-  @Column({ type: DataType.UUID })
-  id: UUID;
+  @Default(UUIDV4)
+  @Column
+  id: string;
 
   @AllowNull(false)
   @Unique

@@ -41,6 +41,10 @@ export class SessionService {
     return this.gameSessionModel.findByPk(sessionId);
   }
 
+  getAllSessions() {
+    return this.gameSessionModel.findAll();
+  }
+
   finishSession(sessionId: UUID) {
     return this.gameSessionModel.update(
       {
@@ -58,7 +62,7 @@ export class SessionService {
     updateSessionDto: UpdateSessionDto,
     sessionId: UUID,
   ) {
-    const session = await this.gameSessionModel.findByPk(sessionId);
+    const session = await this.findBySessionId(sessionId);
     if (!session || session.completedAt) {
       throw new BadRequestException(
         "Invalid session id or session is complted!",

@@ -1,4 +1,3 @@
-import { UUID } from "crypto";
 import {
   AllowNull,
   BelongsTo,
@@ -11,31 +10,37 @@ import {
   Model,
   PrimaryKey,
   Table,
+  UpdatedAt,
 } from "sequelize-typescript";
 import { GameTurn } from "./game-turn.model";
 import { Player } from "./player.model";
 import { GameFieldState } from "src/types/GameFieldState.type";
+import { UUIDV4 } from "sequelize";
 
 @Table({ tableName: "game_sessions", timestamps: true })
 export class GameSession extends Model {
   @PrimaryKey
-  @Default(DataType.UUIDV4)
-  @Column({ type: DataType.UUID })
-  id: UUID;
+  @Default(UUIDV4)
+  @Column
+  id: string;
 
   @AllowNull(false)
   @ForeignKey(() => Player)
   @Column({ field: "left_player_id" })
-  leftPlayerId: UUID;
+  leftPlayerId: string;
 
   @AllowNull(false)
   @ForeignKey(() => Player)
   @Column({ field: "right_player_id" })
-  rightPlayerId: UUID;
+  rightPlayerId: string;
 
   @CreatedAt
   @Column({ field: "created_at", type: DataType.DATE })
   createdAt: Date;
+
+  @UpdatedAt
+  @Column({ field: "updated_at", type: DataType.DATE })
+  updatedAt: Date;
 
   @AllowNull(false)
   @Default(60)

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -40,7 +41,14 @@ export class AuthController {
 
   @Post("register")
   async register(@Body() dto: RegisterUserDto) {
-    const user = await this.userService.createNewUser(dto);
+    let user = await this.userService.findByUsername(dto.username.trim());
+
+    if (user) {
+      throw new BadRequestException("Username already exists");
+    }
+
+    user = await this.userService.createNewUser(dto);
+
     return new UserDto(user.dataValues);
   }
 
@@ -60,7 +68,7 @@ export class AuthController {
     }
 
     const tokens = await this.authService.generateTokens(user);
-    this.userService.updateRefreshToken(tokens[1], user.id);
+    this.userService.updateRefreshToken(tokens[1], user.userId);
 
     return new TokensDto({
       accessToken: tokens[0],

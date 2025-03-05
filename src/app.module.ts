@@ -8,8 +8,8 @@ import { PlayersModule } from "./player/players.module";
 import { GameTurn } from "./models/game-turn.model";
 import { AuthModule } from "./auth/auth.module";
 import { User } from "./models/user.model";
-import { RolesGuard } from "./auth/guards/roles.guard";
-import { APP_GUARD } from "@nestjs/core";
+import { Role } from "./models/role.model";
+import { UserRoles } from "./models/user-roles.model";
 
 @Module({
   imports: [
@@ -21,19 +21,13 @@ import { APP_GUARD } from "@nestjs/core";
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      models: [GameSession, GameTurn, Player, User],
+      models: [GameSession, GameTurn, Player, User, Role, UserRoles],
       autoLoadModels: true,
       synchronize: true,
     }),
     SessionsModule,
     PlayersModule,
     AuthModule,
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
   ],
 })
 export class AppModule {}

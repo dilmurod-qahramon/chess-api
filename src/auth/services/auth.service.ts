@@ -6,7 +6,6 @@ import {
 import { UsersService } from "./users.service";
 import { JwtService } from "@nestjs/jwt";
 import { TokensDto } from "../dto/tokens.dto";
-import { randomBytes } from "crypto";
 import * as bcrypt from "bcrypt";
 import { ACCESS_TOKEN_EXP, REFRESH_TOKEN_EXP } from "src/constants";
 import { User } from "src/models/user.model";
@@ -30,7 +29,7 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens(user);
-    this.usersService.updateRefreshToken(tokens[1], user.id);
+    this.usersService.updateRefreshToken(tokens[1], user.userId);
 
     return {
       accessToken: tokens[0],
@@ -38,8 +37,8 @@ export class AuthService {
     };
   }
 
-  async generateTokens({ id, username }: User) {
-    const refreshTokenPayload = { sub: id };
+  async generateTokens({ userId, username, roles }: User) {
+    let refreshTokenPayload = { sub: userId, roles: roles };
     const newRefreshToken = await this.jwtService.signAsync(
       refreshTokenPayload,
       {
@@ -47,7 +46,7 @@ export class AuthService {
       },
     );
 
-    const payload = { sub: id, username: username };
+    const payload = { sub: userId, username: username, roles: roles };
     const newAccessToken = await this.jwtService.signAsync(payload, {
       expiresIn: ACCESS_TOKEN_EXP,
     });
