@@ -74,10 +74,10 @@ export class GameSession extends Model {
   @Column({ field: "completed_at" })
   completedAt?: Date;
 
-  @BelongsTo(() => Player)
+  @BelongsTo(() => Player, { foreignKey: "leftPlayerId", as: "leftPlayer" })
   leftPlayer: Player;
 
-  @BelongsTo(() => Player)
+  @BelongsTo(() => Player, { foreignKey: "rightPlayerId", as: "rightPlayer" })
   rightPlayer: Player;
 
   @HasMany(() => GameTurn)

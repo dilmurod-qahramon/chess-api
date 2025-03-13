@@ -21,7 +21,7 @@ export class PlayerService {
     return this.playerModel.findOne({ where: { username } });
   }
 
-  findByPlayerId(playerId: UUID) {
+  findByPlayerId(playerId: string) {
     return this.playerModel.findByPk(playerId);
   }
 }

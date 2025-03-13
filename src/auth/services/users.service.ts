@@ -16,7 +16,10 @@ export class UsersService {
   ) {}
 
   findByUsername(username: string): Promise<User | null> {
-    return this.userModel.findOne({ where: { username } });
+    return this.userModel.findOne({
+      where: { username },
+      include: { model: Role, through: { attributes: [] } },
+    });
   }
 
   findByPK(id: string) {
@@ -62,10 +65,10 @@ export class UsersService {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
     this.userModel.update(
       {
-        hashedRefreshToken: hashedRefreshToken,
+        refreshTokenHash: hashedRefreshToken,
       },
       {
-        where: { id: userId },
+        where: { userId: userId },
       },
     );
   }

@@ -3,27 +3,20 @@ import { AuthService } from "./auth.service";
 import { JwtService } from "@nestjs/jwt";
 import { UsersService } from "./users.service";
 import * as bcrypt from "bcrypt";
-import { NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { UnauthorizedException } from "@nestjs/common";
 
 describe("AuthService", () => {
   let service: AuthService;
-  let mockUserService: Partial<UsersService>;
-  let mockJwtService: Partial<JwtService>;
-  const user = { id: 1, username: "test" };
+  let mockUserService: jest.Mocked<UsersService>;
+  let mockJwtService: jest.Mocked<JwtService>;
 
   beforeEach(async () => {
     mockUserService = {
-      findByUsername: jest.fn().mockImplementation((username: string) => {
-        if (username.trim().length <= 3) {
-          throw new NotFoundException();
-        }
-        user.username = username;
-        return user;
-      }),
-    };
+      updateRefreshToken: jest.fn().mockResolvedValue({}),
+    } as unknown as jest.Mocked<UsersService>;
     mockJwtService = {
-      signAsync: jest.fn().mockResolvedValue("mockToken"),
-    };
+      signAsync: jest.fn(),
+    } as unknown as jest.Mocked<JwtService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -34,38 +27,55 @@ describe("AuthService", () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    mockUserService = module.get<UsersService>(UsersService);
-    mockJwtService = module.get<JwtService>(JwtService);
   });
 
-  it("should return access token when successful", async () => {
+  it("should return tokens when successful", async () => {
     const bcryptSpy = jest
       .spyOn(bcrypt, "compare")
       .mockResolvedValue(Promise.resolve(true) as never);
-
-    const result = await service.signIn("test", "test");
+    const generateTokens = jest
+      .spyOn(service, "generateTokens")
+      .mockResolvedValue(["accessToken", "refreshToken"]);
+    const updateRefreshToken = jest.spyOn(
+      mockUserService,
+      "updateRefreshToken",
+    );
+    const result = await service.signIn("password", {} as any);
 
     expect(result).toEqual({
-      access_token: "mockToken",
-    });
-    expect(mockJwtService.signAsync).toHaveBeenCalledWith({
-      sub: 1,
-      username: "test",
+      accessToken: "accessToken",
+      refreshToken: "refreshToken",
+      roles: [],
     });
     expect(bcryptSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("should throw not found exception", async () => {
-    const result = service.signIn(" ", "passowrd");
-    expect(mockUserService.findByUsername).toHaveBeenCalledWith(" ");
-    await expect(result).rejects.toThrow(new NotFoundException());
+    expect(generateTokens).toHaveBeenCalledTimes(1);
+    expect(updateRefreshToken).toHaveBeenCalledTimes(1);
   });
 
   it("should throw unauthorized exception if password is not a match", async () => {
-    jest.spyOn(bcrypt, "compare").mockResolvedValue(false as never);
+    jest.spyOn(bcrypt, "compare").mockResolvedValueOnce(false as never);
 
-    await expect(service.signIn("test", "password")).rejects.toThrow(
+    await expect(service.signIn("password", {} as any)).rejects.toThrow(
       UnauthorizedException,
     );
+  });
+
+  it("should generate tokens correctly", async () => {
+    const jwtSpy = jest
+      .spyOn(mockJwtService, "signAsync")
+      .mockResolvedValueOnce("refreshtoken")
+      .mockResolvedValueOnce("accesstoken");
+
+    const result = await service.generateTokens({
+      userId: "1",
+      username: "test",
+    } as any);
+
+    expect(jwtSpy).toHaveBeenCalledWith({ sub: "1" }, { expiresIn: "7d" });
+    expect(jwtSpy).toHaveBeenCalledWith(
+      { sub: "1", username: "test" },
+      { expiresIn: "10h" },
+    );
+    expect(result).toEqual(["accesstoken", "refreshtoken"]);
   });
 });

@@ -14,14 +14,8 @@ describe("PlayerController", () => {
 
   beforeEach(async () => {
     mockPlayerService = {
-      findOrCreatePlayer: jest.fn().mockImplementation((username: string) => {
-        playerDto.username = username;
-        return [{ dataValues: playerDto }];
-      }),
-      findByUsername: jest.fn().mockImplementation((username: string) => {
-        playerDto.username = username;
-        return { dataValues: playerDto };
-      }),
+      findOrCreatePlayer: jest.fn(),
+      findByUsername: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -59,27 +53,23 @@ describe("PlayerController", () => {
     });
 
     it("findOrCreatePlayer should return PlayerDto", async () => {
+      jest
+        .spyOn(mockPlayerService, "findOrCreatePlayer")
+        .mockResolvedValueOnce([
+          {
+            dataValues: { username: playerDto.username },
+          },
+        ] as any);
       const result = await controller.findOrCreatePlayer(playerDto.username);
 
       expect(mockPlayerService.findOrCreatePlayer).toHaveBeenCalledWith(
         playerDto.username,
       );
-      expect(mockPlayerService.findOrCreatePlayer!("testUser")).toEqual([
-        { dataValues: { username: "testUser" } },
-      ]);
       expect(result).toEqual(playerDto);
     });
   });
 
   describe("findPlayerByUsername action", () => {
-    it("findPlayerByUsername should throw BadRequest on invalid username", async () => {
-      await expect(controller.findPlayerByUsername("")).rejects.toThrow(
-        new BadRequestException(
-          "Username cannot be empty or less than 5 characters.",
-        ),
-      );
-    });
-
     it("should throw not found exception when findPlayerByUsername return null", async () => {
       jest.spyOn(mockPlayerService, "findByUsername").mockResolvedValue(null);
       await expect(
@@ -92,6 +82,11 @@ describe("PlayerController", () => {
     });
 
     it("findPlayerByUsername should return PlayerDto", async () => {
+      jest
+        .spyOn(mockPlayerService, "findByUsername")
+        .mockResolvedValue({
+          dataValues: { username: playerDto.username },
+        } as any);
       const result = await controller.findPlayerByUsername(playerDto.username);
       expect(result).toEqual(playerDto);
     });

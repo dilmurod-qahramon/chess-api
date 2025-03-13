@@ -6,6 +6,7 @@ import { GameSession } from "src/models/game-session.model";
 import { GameTurn } from "src/models/game-turn.model";
 import { PlayersModule } from "src/player/players.module";
 import { AuthModule } from "src/auth/auth.module";
+import { GameTurnService } from "./services/game-turn.service";
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { AuthModule } from "src/auth/auth.module";
     AuthModule,
   ],
   controllers: [SessionController],
-  providers: [SessionService],
+  providers: [SessionService, GameTurnService],
 })
 export class SessionsModule {}

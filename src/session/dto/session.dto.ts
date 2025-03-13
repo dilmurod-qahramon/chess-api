@@ -1,21 +1,20 @@
-import { Exclude, Expose, Transform } from "class-transformer";
+import { Exclude, Expose } from "class-transformer";
 import { IsString, IsUUID } from "class-validator";
-import { UUID } from "crypto";
 import { GameFieldState } from "src/types/GameFieldState.type";
 
 export class SessionDto {
   @Expose()
   @IsUUID()
-  id: UUID;
+  id: string;
   @Expose()
   fieldState: GameFieldState;
   @Expose()
   @IsString()
   currentTurn: "left" | "right";
   @Exclude()
-  leftPlayerId: UUID;
+  leftPlayerId: string;
   @Exclude()
-  rightPlayerId: UUID;
+  rightPlayerId: string;
   @Exclude()
   createdAt: Date;
   @Exclude()

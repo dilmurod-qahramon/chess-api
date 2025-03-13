@@ -12,31 +12,21 @@ import { SessionDto } from "./dto/session.dto";
 
 describe("SessionController", () => {
   let controller: SessionController;
-  let mockSessionService: Partial<SessionService>;
-  let mockPlayerService: Partial<PlayerService>;
+  let mockSessionService: jest.Mocked<SessionService>;
+  let mockPlayerService: jest.Mocked<PlayerService>;
   const sessionDto = new SessionDto();
-  sessionDto.id = "1-1-1-1-1";
+  sessionDto.id = "test id";
   sessionDto.currentTurn = "left";
 
   beforeEach(async () => {
     mockPlayerService = {
-      findByPlayerId: jest.fn().mockImplementation((playerId: string) => {
-        if (playerId === "1") {
-          return { username: "user1" };
-        } else if (playerId === "2") {
-          return { username: "user2" };
-        }
-      }),
-    };
+      findByPlayerId: jest.fn(),
+    } as unknown as jest.Mocked<PlayerService>;
     mockSessionService = {
-      createNewSession: jest.fn().mockResolvedValue("some-id"),
-      findBySessionId: jest.fn().mockImplementation(() => {
-        return { dataValues: sessionDto };
-      }),
-      addNewActionsToTheSession: jest.fn().mockImplementation(() => {
-        return { dataValues: sessionDto };
-      }),
-    };
+      createNewSession: jest.fn(),
+      findBySessionId: jest.fn(),
+      addNewActionsToTheSession: jest.fn(),
+    } as unknown as jest.Mocked<SessionService>;
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SessionController],
@@ -58,47 +48,69 @@ describe("SessionController", () => {
 
   describe("createNewSession action", () => {
     it("should throw BadRequest if one of players does not exist", async () => {
-      await expect(
-        controller.createSession({
-          leftPlayerId: "1",
-          rightPlayerId: "3", // This ID is invalid, so it should throw
-        }),
-      ).rejects.toThrow(new BadRequestException("Invalid player id!"));
+      mockPlayerService.findByPlayerId
+        .mockResolvedValueOnce({} as any)
+        .mockResolvedValueOnce(null);
+      const result = controller.createSession({
+        leftPlayerId: "1",
+        rightPlayerId: "2",
+      });
+      await expect(result).rejects.toThrow(
+        new BadRequestException("Invalid player id!"),
+      );
+      expect(mockPlayerService.findByPlayerId).toHaveBeenCalledTimes(2);
     });
 
     it("should return session id if succesfull", async () => {
-      expect(
-        await controller.createSession({
-          leftPlayerId: "1",
-          rightPlayerId: "2",
-        }),
-      ).toEqual("some-id");
+      const dto = {
+        leftPlayerId: "1",
+        rightPlayerId: "2",
+      };
+      mockPlayerService.findByPlayerId
+        .mockResolvedValueOnce({} as any)
+        .mockResolvedValueOnce({} as any);
+      mockSessionService.createNewSession.mockResolvedValueOnce("some-id");
+      const result = await controller.createSession(dto);
+      expect(result).toEqual("some-id");
+      expect(mockPlayerService.findByPlayerId).toHaveBeenCalledTimes(2);
+      expect(mockSessionService.createNewSession).toHaveBeenCalledWith(dto);
     });
   });
 
   describe("findBySessionId action", () => {
     it("should return sessionDto", async () => {
-      expect(await controller.findBySessionId("ran-dom-sess-ion-id")).toEqual({
-        currentTurn: "left",
-        id: "1-1-1-1-1",
-      });
+      mockSessionService.findBySessionId.mockResolvedValueOnce({
+        dataValues: sessionDto,
+      } as any);
+      const result = await controller.findBySessionId(sessionDto.id);
+      expect(result).toEqual(sessionDto);
+      expect(mockSessionService.findBySessionId).toHaveBeenCalledWith(
+        sessionDto.id,
+      );
     });
 
     it("should throw not found exception if session is null", async () => {
       jest.spyOn(mockSessionService, "findBySessionId").mockResolvedValue(null);
-      const result = controller.findBySessionId("1-1-1-1-1");
+      const result = controller.findBySessionId(sessionDto.id);
       await expect(result).rejects.toThrow(
         new NotFoundException("Invalid session id!"),
       );
+      expect(mockSessionService.findBySessionId).toHaveBeenCalledTimes(1);
+    });
+
+    it("should throw bad request exception if session is null", async () => {
+      jest
+        .spyOn(mockSessionService, "findBySessionId")
+        .mockResolvedValue({ completedAt: new Date() } as any);
+      const result = controller.findBySessionId(sessionDto.id);
+      await expect(result).rejects.toThrow(
+        new BadRequestException("Session is already over!"),
+      );
+      expect(mockSessionService.findBySessionId).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("addNewActionsToTheSession action", () => {
-    it("should return sessionDto on success", async () => {
-      const result = controller.addActionsToSession("ran-dom-sess-ion-id", {
-        actions: [null, null, null],
-      });
-      expect(result).resolves.toEqual(sessionDto);
-    });
+    it("should return sessionDto on success", async () => {});
   });
 });

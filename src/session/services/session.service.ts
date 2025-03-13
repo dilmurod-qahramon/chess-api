@@ -2,10 +2,8 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { CreateSessionDto } from "../dto/create-session.dto";
 import { InjectConnection, InjectModel } from "@nestjs/sequelize";
 import { GameSession } from "src/models/game-session.model";
-import { UUID } from "crypto";
 import { GameFieldState } from "src/types/GameFieldState.type";
 import { UpdateSessionDto } from "../dto/update-session.dto";
-import { GameTurn } from "src/models/game-turn.model";
 import { GameTurnActions } from "src/types/GameTurnAction.type";
 import {
   CHESS_BOARD_SIZE,
@@ -13,17 +11,44 @@ import {
   ONE_SECOND,
 } from "src/constants";
 import { Sequelize } from "sequelize";
+import { Player } from "src/models/player.model";
+import { GameTurnService } from "./game-turn.service";
 
 @Injectable()
 export class SessionService {
   constructor(
     @InjectModel(GameSession)
     private readonly gameSessionModel: typeof GameSession,
-    @InjectModel(GameTurn)
-    private readonly gameTurnModel: typeof GameTurn,
     @InjectConnection()
     private readonly sequelize: Sequelize,
+    private gameTurnService: GameTurnService,
   ) {}
+
+  findBySessionId(sessionId: string) {
+    return this.gameSessionModel.findByPk(sessionId);
+  }
+
+  getAllSessions() {
+    return this.gameSessionModel.findAll({
+      include: [
+        { model: Player, as: "leftPlayer" },
+        { model: Player, as: "rightPlayer" },
+      ],
+    });
+  }
+
+  finishSession(sessionId: string) {
+    return this.gameSessionModel.update(
+      {
+        completedAt: new Date(),
+      },
+      {
+        where: {
+          id: sessionId,
+        },
+      },
+    );
+  }
 
   async createNewSession(createSessionDto: CreateSessionDto) {
     const session = await this.gameSessionModel.create({
@@ -37,38 +62,10 @@ export class SessionService {
     return session.id;
   }
 
-  findBySessionId(sessionId: UUID) {
-    return this.gameSessionModel.findByPk(sessionId);
-  }
-
-  getAllSessions() {
-    return this.gameSessionModel.findAll();
-  }
-
-  finishSession(sessionId: UUID) {
-    return this.gameSessionModel.update(
-      {
-        completedAt: new Date(),
-      },
-      {
-        where: {
-          id: sessionId,
-        },
-      },
-    );
-  }
-
   async addNewActionsToTheSession(
     updateSessionDto: UpdateSessionDto,
-    sessionId: UUID,
+    session: GameSession,
   ) {
-    const session = await this.findBySessionId(sessionId);
-    if (!session || session.completedAt) {
-      throw new BadRequestException(
-        "Invalid session id or session is complted!",
-      );
-    }
-
     const playerId =
       session.currentTurn == "left"
         ? session.leftPlayerId
@@ -76,13 +73,11 @@ export class SessionService {
 
     try {
       const result = await this.sequelize.transaction(async (t) => {
-        await this.gameTurnModel.create(
-          {
-            gameSessionId: session.id,
-            playerId: playerId,
-            actions: updateSessionDto.actions,
-          },
-          { transaction: t },
+        await this.gameTurnService.createNewGameTurn(
+          session.id,
+          playerId,
+          updateSessionDto.actions,
+          t,
         );
 
         const newFieldState = this.updateFieldState(
@@ -116,6 +111,10 @@ export class SessionService {
       console.log(error);
       throw new Error("Transacion failed and rolled back.");
     }
+  }
+
+  async deleteSessionById(sessionId: string) {
+    await this.gameSessionModel.destroy({ where: { id: sessionId } });
   }
 
   private updateFieldState(

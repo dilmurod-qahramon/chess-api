@@ -4,7 +4,6 @@ import {
   ClassSerializerInterceptor,
   Controller,
   NotFoundException,
-  Param,
   Post,
   UnauthorizedException,
   UseInterceptors,
@@ -31,11 +30,13 @@ export class AuthController {
 
   @Post("login")
   async signIn(@Body() loginDto: LoginUserDto) {
-    const token = await this.authService.signIn(
-      loginDto.username.trim(),
-      loginDto.password.trim(),
-    );
+    const user = await this.userService.findByUsername(loginDto.username);
+    if (user == null) {
+      throw new NotFoundException("User is not found!");
+    }
 
+    const token = await this.authService.signIn(loginDto.password.trim(), user);
+    token.roles = user.roles.map((role) => role.role);
     return new TokensDto(token);
   }
 
@@ -48,8 +49,7 @@ export class AuthController {
     }
 
     user = await this.userService.createNewUser(dto);
-
-    return new UserDto(user.dataValues);
+    return new UserDto(user);
   }
 
   @Post("refresh-token")
@@ -59,7 +59,7 @@ export class AuthController {
     const payload = await this.verifyRefreshToken(refreshToken);
     const user = await this.userService.findByPK(payload.sub);
     if (!user) {
-      throw new NotFoundException("Invalid refresh token");
+      throw new NotFoundException("Invalid refresh token payload.");
     }
 
     const isValid = await bcrypt.compare(refreshToken, user.refreshTokenHash);
@@ -82,7 +82,7 @@ export class AuthController {
         secret: jwtConstants.secret,
       });
     } catch (error) {
-      throw new UnauthorizedException("Invalid token");
+      throw new UnauthorizedException("Invalid token!");
     }
   }
 }

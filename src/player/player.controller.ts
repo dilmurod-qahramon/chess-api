@@ -33,16 +33,7 @@ export class PlayerController {
   async findPlayerByUsername(
     @Param("username") username: string,
   ): Promise<PlayerDto> {
-    username = username?.trim();
-    if (!username || username.length < 5) {
-      throw new BadRequestException(
-        "Username cannot be empty or less than 5 characters.",
-      );
-    }
-    console.log(username);
     const player = await this.playerService.findByUsername(username);
-    console.log(player);
-
     if (!player) {
       throw new NotFoundException(
         `Player with username "${username}" is not found.`,
