@@ -14,8 +14,16 @@ describe("Sessions", () => {
   let app: INestApplication;
   let sessionService: SessionService;
   let playerService: PlayerService;
+  let authGuardMock: { canActivate: jest.Mock };
+  let rolesGuardMock: { canActivate: jest.Mock };
 
   beforeAll(async () => {
+    authGuardMock = {
+      canActivate: jest.fn(() => true),
+    };
+    rolesGuardMock = {
+      canActivate: jest.fn(() => true),
+    };
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [SessionController],
       providers: [
@@ -36,9 +44,9 @@ describe("Sessions", () => {
       ],
     })
       .overrideGuard(AuthGuard)
-      .useValue({ canActivate: jest.fn(() => true) })
+      .useValue(authGuardMock)
       .overrideGuard(RolesGuard)
-      .useValue({ canActivate: jest.fn(() => true) })
+      .useValue(rolesGuardMock)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -48,9 +56,33 @@ describe("Sessions", () => {
     sessionService = moduleFixture.get<SessionService>(SessionService);
   });
 
+  describe("Controller level AuthGuard", () => {
+    it("should throw forbidden exception if token is invalid", async () => {
+      authGuardMock.canActivate.mockResolvedValueOnce(false);
+      const response = await request(app.getHttpServer())
+        .get("/sessions/abc")
+        .send();
+
+      expect(response.status).toEqual(403);
+      expect(response.body.message).toBe("Forbidden resource");
+      expect(authGuardMock.canActivate).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("/GET sessions", () => {
     beforeEach(() => {
       jest.clearAllMocks();
+    });
+
+    it("should throw forbidden exception if role is invalid", async () => {
+      jest.spyOn(rolesGuardMock, "canActivate").mockResolvedValueOnce(false);
+      const response = await request(app.getHttpServer())
+        .get("/sessions/invalid-id")
+        .send();
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Forbidden resource");
+      expect(rolesGuardMock.canActivate).toHaveBeenCalledTimes(1);
     });
 
     it("should throw not found exception if session id is invalid", async () => {
@@ -99,6 +131,17 @@ describe("Sessions", () => {
   describe("/POST sessions", () => {
     beforeEach(() => {
       jest.clearAllMocks();
+    });
+
+    it("should throw forbidden exception if role is invalid", async () => {
+      jest.spyOn(rolesGuardMock, "canActivate").mockResolvedValueOnce(false);
+      const response = await request(app.getHttpServer())
+        .post("/sessions")
+        .send();
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Forbidden resource");
+      expect(rolesGuardMock.canActivate).toHaveBeenCalledTimes(1);
     });
 
     it("should throw bad request if players are the same.", async () => {

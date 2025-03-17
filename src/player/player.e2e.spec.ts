@@ -8,8 +8,10 @@ import { AuthGuard } from "src/auth/guards/auth.guard";
 describe("Player", () => {
   let app: INestApplication;
   let playerService: PlayerService;
+  let authGuardMock: { canActivate: jest.Mock };
 
   beforeAll(async () => {
+    authGuardMock = { canActivate: jest.fn(() => true) };
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [PlayerController],
       providers: [
@@ -24,7 +26,7 @@ describe("Player", () => {
       ],
     })
       .overrideGuard(AuthGuard)
-      .useValue({ canActivate: jest.fn(() => true) })
+      .useValue(authGuardMock)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -35,6 +37,19 @@ describe("Player", () => {
 
   afterAll(async () => {
     await app.close();
+  });
+
+  describe("Controller level AuthGuard", () => {
+    it("should throw forbidden exception if token is invalid", async () => {
+      authGuardMock.canActivate.mockResolvedValueOnce(false);
+      const response = await request(app.getHttpServer())
+        .post("/players/abc")
+        .send();
+
+      expect(response.status).toEqual(403);
+      expect(response.body.message).toBe("Forbidden resource");
+      expect(authGuardMock.canActivate).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("/POST players", () => {
