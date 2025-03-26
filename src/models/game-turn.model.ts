@@ -1,4 +1,3 @@
-import { UUID } from "crypto";
 import {
   AllowNull,
   BelongsTo,
@@ -7,7 +6,6 @@ import {
   DataType,
   Default,
   ForeignKey,
-  IsUUID,
   Model,
   PrimaryKey,
   Table,
